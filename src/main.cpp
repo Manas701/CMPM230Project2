@@ -3,12 +3,13 @@
 
 int main()
 {
-    auto window = sf::RenderWindow{ { 1920u, 1080u }, "CMake SFML Project" };
-    window.setFramerateLimit(144);
+    auto window = sf::RenderWindow{sf::VideoMode(800, 600), "Tilemap :)"};
 
     while (window.isOpen())
     {
-        for (auto event = sf::Event{}; window.pollEvent(event);)
+
+        sf::Event event;
+        while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
             {
@@ -17,6 +18,9 @@ int main()
         }
 
         window.clear();
+
+        //drawing stuff here
+
         window.display();
     }
 }
