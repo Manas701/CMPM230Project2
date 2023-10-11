@@ -48,6 +48,11 @@ int main()
         window.clear();
 
         //drawing stuff here
+
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+        {
+            std::cout << sf::Mouse::getPosition(window).x << ", " << sf::Mouse::getPosition(window).y << "\n";
+        }
         
         //draw grid
         drawGrid(window, lineWidth, indentWidth, gridLength, gridSize);
