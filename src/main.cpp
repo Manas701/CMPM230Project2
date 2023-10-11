@@ -24,8 +24,9 @@ void drawGrid(sf::RenderWindow &window, float lineWidth, float indentWidth, floa
 int main()
 {
 
-    const float windowLength = 1000.0f;
-    const float indentWidth = windowLength / 20;
+    const float windowLength = 800.0f;
+    const float indentPercent = 0.05;
+    const float indentWidth = windowLength * indentPercent;
     const float lineWidth = 1.0f;
     const float gridLength = windowLength - (2*indentWidth);
     const int gridSize = 32; 
