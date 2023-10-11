@@ -21,15 +21,30 @@ void drawGrid(sf::RenderWindow &window, float lineWidth, float indentWidth, floa
     }
 }
 
+void getTilePosition(sf::RenderWindow &window, float windowLength, float indentWidth, float gridLength, int gridSize)
+{
+    float gridPosX = sf::Mouse::getPosition(window).x - indentWidth;
+    float gridPosY = sf::Mouse::getPosition(window).y - indentWidth;
+    // if mouse is not within grid, don't give a tile position
+    if (gridPosX < 0 || gridPosX > gridLength || gridPosY < 0 || gridPosY > gridLength)
+    {
+        return;
+    }
+    float squareLength = gridLength / gridSize;
+    int xSquare = gridPosX / squareLength;
+    int ySquare = gridPosY / squareLength;
+    std::cout << "Square Pos: (" << xSquare << ", " << ySquare << ")\n";
+}
+
 int main()
 {
 
     const float windowLength = 800.0f;
     const float indentPercent = 0.05;
-    const float indentWidth = windowLength * indentPercent;
+    const float indentWidth = windowLength * indentPercent; // 40
     const float lineWidth = 1.0f;
-    const float gridLength = windowLength - (2*indentWidth);
-    const int gridSize = 32; 
+    const float gridLength = windowLength - (2*indentWidth); // 720
+    const int gridSize = 32; // 40 to 760
 
     sf::RenderWindow window(sf::VideoMode(windowLength, windowLength), "Tilemap :)");
 
@@ -51,7 +66,8 @@ int main()
 
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
         {
-            std::cout << sf::Mouse::getPosition(window).x << ", " << sf::Mouse::getPosition(window).y << "\n";
+            // std::cout << sf::Mouse::getPosition(window).x << ", " << sf::Mouse::getPosition(window).y << "\n";
+            getTilePosition(window, windowLength, indentWidth, gridLength, gridSize);
         }
         
         //draw grid
