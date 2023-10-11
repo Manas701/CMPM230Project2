@@ -21,19 +21,19 @@ void drawGrid(sf::RenderWindow &window, float lineWidth, float indentWidth, floa
     }
 }
 
-void getTilePosition(sf::RenderWindow &window, float windowLength, float indentWidth, float gridLength, int gridSize)
+std::tuple<int, int> getTilePosition(sf::RenderWindow &window, float windowLength, float indentWidth, float gridLength, int gridSize, float squareLength)
 {
     float gridPosX = sf::Mouse::getPosition(window).x - indentWidth;
     float gridPosY = sf::Mouse::getPosition(window).y - indentWidth;
     // if mouse is not within grid, don't give a tile position
     if (gridPosX < 0 || gridPosX > gridLength || gridPosY < 0 || gridPosY > gridLength)
     {
-        return;
+        return std::make_tuple(-1,-1);
     }
-    float squareLength = gridLength / gridSize;
     int xSquare = gridPosX / squareLength;
     int ySquare = gridPosY / squareLength;
     std::cout << "Square Pos: (" << xSquare << ", " << ySquare << ")\n";
+    return std::make_tuple(xSquare, ySquare);
 }
 
 int main()
@@ -45,6 +45,7 @@ int main()
     const float lineWidth = 1.0f;
     const float gridLength = windowLength - (2*indentWidth); // 720
     const int gridSize = 32; // 40 to 760
+    const float squareLength = gridLength / gridSize; // 22.5
 
     sf::RenderWindow window(sf::VideoMode(windowLength, windowLength), "Tilemap :)");
 
@@ -64,10 +65,13 @@ int main()
 
         //drawing stuff here
 
-        if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+        std::tuple<int, int> tilePosition = getTilePosition(window, windowLength, indentWidth, gridLength, gridSize, squareLength);
+        if (std::get<0>(tilePosition) >= 0)
         {
-            // std::cout << sf::Mouse::getPosition(window).x << ", " << sf::Mouse::getPosition(window).y << "\n";
-            getTilePosition(window, windowLength, indentWidth, gridLength, gridSize);
+            sf::RectangleShape hoverIndicator(sf::Vector2f(squareLength-lineWidth, squareLength-lineWidth));
+            hoverIndicator.setPosition(indentWidth+(std::get<0>(tilePosition)*squareLength), indentWidth+lineWidth+(std::get<1>(tilePosition)*squareLength));
+            hoverIndicator.setFillColor(sf::Color(255, 255, 255, 100));
+            window.draw(hoverIndicator);
         }
         
         //draw grid
