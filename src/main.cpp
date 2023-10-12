@@ -36,6 +36,18 @@ std::tuple<int, int> getTilePosition(sf::RenderWindow &window, float windowLengt
     return std::make_tuple(xSquare, ySquare);
 }
 
+void drawIndicator(sf::RenderWindow &window, float windowLength, float indentWidth, float gridLength, float gridSize, float squareLength, float lineWidth)
+{
+    std::tuple<int, int> tilePosition = getTilePosition(window, windowLength, indentWidth, gridLength, gridSize, squareLength);
+    if (std::get<0>(tilePosition) >= 0)
+    {
+        sf::RectangleShape hoverIndicator(sf::Vector2f(squareLength-lineWidth, squareLength-lineWidth));
+        hoverIndicator.setPosition(indentWidth+(std::get<0>(tilePosition)*squareLength), indentWidth+lineWidth+(std::get<1>(tilePosition)*squareLength));
+        hoverIndicator.setFillColor(sf::Color(255, 255, 255, 100));
+        window.draw(hoverIndicator);
+    }
+}
+
 int main()
 {
 
@@ -44,7 +56,7 @@ int main()
     const float indentWidth = windowLength * indentPercent; // 40
     const float lineWidth = 1.0f;
     const float gridLength = windowLength - (2*indentWidth); // 720
-    const int gridSize = 32; // 40 to 760
+    const int gridSize = 8; // 40 to 760
     const float squareLength = gridLength / gridSize; // 22.5
 
     sf::RenderWindow window(sf::VideoMode(windowLength, windowLength), "Tilemap :)");
@@ -65,14 +77,8 @@ int main()
 
         //drawing stuff here
 
-        std::tuple<int, int> tilePosition = getTilePosition(window, windowLength, indentWidth, gridLength, gridSize, squareLength);
-        if (std::get<0>(tilePosition) >= 0)
-        {
-            sf::RectangleShape hoverIndicator(sf::Vector2f(squareLength-lineWidth, squareLength-lineWidth));
-            hoverIndicator.setPosition(indentWidth+(std::get<0>(tilePosition)*squareLength), indentWidth+lineWidth+(std::get<1>(tilePosition)*squareLength));
-            hoverIndicator.setFillColor(sf::Color(255, 255, 255, 100));
-            window.draw(hoverIndicator);
-        }
+        //draw transparent gray box over selected tile
+        drawIndicator(window, windowLength, indentWidth, gridLength, gridSize, squareLength, lineWidth);
         
         //draw grid
         drawGrid(window, lineWidth, indentWidth, gridLength, gridSize);
