@@ -7,13 +7,13 @@ void drawGrid(sf::RenderWindow &window, float lineWidth, float indentWidth, floa
 
     for (int i=0; i <= gridSize; i++)
     {
+        // draw a horizontal line
+        line.setRotation(0);
         line.setPosition(0, gridLength/gridSize * i);
         line.move(indentWidth, indentWidth);
         window.draw(line);
-    }
 
-    for (int i=0; i <= gridSize; i++)
-    {
+        // draw a vertical line
         line.setRotation(90);
         line.setPosition(gridLength/gridSize * i, 0);
         line.move(indentWidth, indentWidth);
@@ -30,10 +30,7 @@ std::tuple<int, int> getTilePosition(sf::RenderWindow &window, float windowLengt
     {
         return std::make_tuple(-1,-1);
     }
-    int xSquare = gridPosX / squareLength;
-    int ySquare = gridPosY / squareLength;
-    std::cout << "Square Pos: (" << xSquare << ", " << ySquare << ")\n";
-    return std::make_tuple(xSquare, ySquare);
+    return std::make_tuple(gridPosX / squareLength, gridPosY / squareLength);
 }
 
 void drawIndicator(sf::RenderWindow &window, float windowLength, float indentWidth, float gridLength, float gridSize, float squareLength, float lineWidth)
@@ -43,7 +40,7 @@ void drawIndicator(sf::RenderWindow &window, float windowLength, float indentWid
     {
         sf::RectangleShape hoverIndicator(sf::Vector2f(squareLength-lineWidth, squareLength-lineWidth));
         hoverIndicator.setPosition(indentWidth+(std::get<0>(tilePosition)*squareLength), indentWidth+lineWidth+(std::get<1>(tilePosition)*squareLength));
-        hoverIndicator.setFillColor(sf::Color(255, 255, 255, 100));
+        hoverIndicator.setFillColor(sf::Color(255, 255, 255, 100)); // transparent gray
         window.draw(hoverIndicator);
     }
 }
@@ -58,8 +55,10 @@ int main()
     const float gridLength = windowLength - (2*indentWidth); // 720
     const int gridSize = 8; // 40 to 760
     const float squareLength = gridLength / gridSize; // 22.5
+    int tileMap[gridSize][gridSize] = {};
 
     sf::RenderWindow window(sf::VideoMode(windowLength, windowLength), "Tilemap :)");
+    sf::RenderWindow palette(sf::VideoMode(400, 800), "Palette :I");
 
     while (window.isOpen())
     {
@@ -69,11 +68,20 @@ int main()
         {
             if (event.type == sf::Event::Closed)
             {
+                for (int i=0;i<gridSize;i++)
+                {
+                    for (int j=0;j<gridSize;j++)
+                    {
+                        std::cout << tileMap[i][j] << "  ";
+                    }
+                    std::cout << "\n";
+                }
                 window.close();
             }
         }
 
         window.clear();
+        palette.clear();
 
         //drawing stuff here
 
@@ -84,5 +92,6 @@ int main()
         drawGrid(window, lineWidth, indentWidth, gridLength, gridSize);
 
         window.display();
+        palette.display();
     }
 }
