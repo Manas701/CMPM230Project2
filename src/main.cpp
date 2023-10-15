@@ -60,12 +60,29 @@ void drawIndicator()
     }
 }
 
-void alterMap()
+void alterGrid()
 {
     std::tuple<int, int> tilePosition = getTilePosition();
     if (std::get<0>(tilePosition) >= 0)
     {
         tileMap[std::get<0>(tilePosition)][std::get<1>(tilePosition)] = 1;
+    }
+}
+
+void drawTiles()
+{
+    for (int i=0;i<gridSize;i++)
+    {
+        for (int j=0;j<gridSize;j++)
+        {
+            if (tileMap[i][j] == 1)
+            {
+                sf::RectangleShape exTile(sf::Vector2f(squareLength-lineWidth, squareLength-lineWidth));
+                exTile.setPosition(indentWidth+(i*squareLength), indentWidth+lineWidth+(j*squareLength));
+                exTile.setFillColor(sf::Color(0, 0, 255)); // transparent gray
+                window.draw(exTile);
+            }
+        }
     }
 }
 
@@ -102,13 +119,18 @@ int main()
         //draw grid
         drawGrid();
 
+        //alter arrays to represent drawn tiles
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+        {
+            alterGrid();
+        }
+
+        //draw painted tiles
+        drawTiles();
+
         //draw transparent gray box over selected tile
         drawIndicator();
 
-        if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-        {
-            alterMap();
-        }
 
         window.display();
         palette.display();
