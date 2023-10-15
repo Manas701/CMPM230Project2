@@ -39,6 +39,23 @@ void loadPalette()
     loadTexture(&flowerTile, "FlowerTile.png", 2);
 }
 
+void drawPaletteIndicator()
+{
+    float tileMouseX = sf::Mouse::getPosition(palette).x;
+    float tileMouseY = sf::Mouse::getPosition(palette).y;
+    if (tileMouseX<0 || tileMouseX>paletteLength || tileMouseY<0 || tileMouseY>paletteHeight)
+    {
+        return;
+    }
+    tileMouseX = int(tileMouseX / tileWidth);
+    tileMouseY = int(tileMouseY / tileHeight);
+
+    sf::RectangleShape hoverIndicator(sf::Vector2f(tileWidth, tileHeight));
+    hoverIndicator.setPosition(tileMouseX*tileWidth, tileMouseY*tileHeight);
+    hoverIndicator.setFillColor(sf::Color(255, 255, 255, 100)); // transparent gray
+    palette.draw(hoverIndicator);
+}
+
 void drawPalette()
 {
     for (int i=1; i<=paletteAcross;i++)
@@ -49,6 +66,8 @@ void drawPalette()
         tile.setPosition(((i-1)*tileWidth), 0);
         palette.draw(tile);
     }
+
+    drawPaletteIndicator();
 }
 
 void drawGrid()
