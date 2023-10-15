@@ -60,6 +60,15 @@ void drawIndicator()
     }
 }
 
+void alterMap()
+{
+    std::tuple<int, int> tilePosition = getTilePosition();
+    if (std::get<0>(tilePosition) >= 0)
+    {
+        tileMap[std::get<0>(tilePosition)][std::get<1>(tilePosition)] = 1;
+    }
+}
+
 int main()
 {
     window.setPosition(sf::Vector2i(200, 0));
@@ -73,14 +82,14 @@ int main()
         {
             if (event.type == sf::Event::Closed)
             {
-                // for (int i=0;i<gridSize;i++)
-                // {
-                //     for (int j=0;j<gridSize;j++)
-                //     {
-                //         std::cout << tileMap[i][j] << "  ";
-                //     }
-                //     std::cout << "\n";
-                // }
+                for (int i=0;i<gridSize;i++)
+                {
+                    for (int j=0;j<gridSize;j++)
+                    {
+                        std::cout << tileMap[j][i] << "  ";
+                    }
+                    std::cout << "\n";
+                }
                 window.close();
             }
         }
@@ -95,6 +104,11 @@ int main()
 
         //draw transparent gray box over selected tile
         drawIndicator();
+
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+        {
+            alterMap();
+        }
 
         window.display();
         palette.display();
