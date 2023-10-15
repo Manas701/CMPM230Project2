@@ -6,15 +6,26 @@ const float indentPercent = 0.05;
 const float indentWidth = windowLength * indentPercent; // 40
 const float lineWidth = 1.0f;
 const float gridLength = windowLength - (2*indentWidth); // 720
-const int gridSize = 8; // 40 to 760
+const int gridSize = 32; // 40 to 760
 const float squareLength = gridLength / gridSize; // 22.5
 const float paletteLength = 200;
 const float paletteHeight = 400;
+const std::string pathToAssets = "../../src/assets/";
 int tileMap[gridSize][gridSize] = {};
 std::map<int, sf::Texture> paletteMap;
 
 sf::RenderWindow window(sf::VideoMode(windowLength, windowLength), "Tilemap :)");
 sf::RenderWindow palette(sf::VideoMode(paletteLength, paletteHeight), "Palette :I");
+
+void loadPalette()
+{
+    sf::Texture grassTile;
+    if (!grassTile.loadFromFile(pathToAssets+"GrassTile.png"))
+    {
+        std::cout << "darn" << std::endl;
+    }
+    paletteMap[1] = grassTile;
+}
 
 void drawGrid()
 {
@@ -75,12 +86,19 @@ void drawTiles()
     {
         for (int j=0;j<gridSize;j++)
         {
-            if (tileMap[i][j] == 1)
+            if (tileMap[i][j] > 0)
             {
-                sf::RectangleShape exTile(sf::Vector2f(squareLength-lineWidth, squareLength-lineWidth));
-                exTile.setPosition(indentWidth+(i*squareLength), indentWidth+lineWidth+(j*squareLength));
-                exTile.setFillColor(sf::Color(0, 0, 255)); // transparent gray
-                window.draw(exTile);
+                sf::Sprite tile;
+                tile.setTexture(paletteMap[tileMap[i][j]], true);
+                tile.setScale(sf::Vector2f(squareLength/tile.getLocalBounds().width, squareLength/tile.getLocalBounds().height));
+                tile.setPosition(indentWidth+(i*squareLength), indentWidth+lineWidth+(j*squareLength));
+                window.draw(tile);
+            }
+            else {
+                sf::RectangleShape emptyTile(sf::Vector2f(squareLength-lineWidth, squareLength-lineWidth));
+                emptyTile.setPosition(indentWidth+(i*squareLength), indentWidth+lineWidth+(j*squareLength));
+                emptyTile.setFillColor(sf::Color(0, 0, 0)); // black
+                window.draw(emptyTile);
             }
         }
     }
@@ -90,6 +108,8 @@ int main()
 {
     window.setPosition(sf::Vector2i(200, 0));
     palette.setPosition(sf::Vector2i(window.getPosition().x+windowLength+indentWidth, windowLength*0.25));
+
+    loadPalette();
 
     while (window.isOpen())
     {
