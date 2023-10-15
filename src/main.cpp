@@ -10,7 +10,10 @@ const int gridSize = 32; // 40 to 760
 const float squareLength = gridLength / gridSize; // 22.5
 const float paletteLength = 200;
 const float paletteHeight = 400;
-const int paletteAmount = 8;
+const int paletteAcross = 2;
+const int paletteDown = 4;
+const float tileWidth = paletteLength/paletteAcross;
+const float tileHeight = paletteHeight/paletteDown;
 const std::string pathToAssets = "../../src/assets/";
 int tileMap[gridSize][gridSize] = {};
 std::map<int, sf::Texture> paletteMap;
@@ -34,6 +37,18 @@ void loadPalette()
 {
     loadTexture(&grassTile, "GrassTile.png", 1);
     loadTexture(&flowerTile, "FlowerTile.png", 2);
+}
+
+void drawPalette()
+{
+    for (int i=1; i<=paletteAcross;i++)
+    {
+        sf::Sprite tile;
+        tile.setTexture(paletteMap[i]);
+        tile.setScale(sf::Vector2f(tileWidth/tile.getLocalBounds().width, tileHeight/tile.getLocalBounds().height));
+        tile.setPosition(((i-1)*tileWidth), 0);
+        palette.draw(tile);
+    }
 }
 
 void drawGrid()
@@ -144,6 +159,9 @@ int main()
         palette.clear();
 
         //drawing stuff here
+
+        //draw tiles on palette
+        drawPalette();
 
         //draw grid
         drawGrid();
