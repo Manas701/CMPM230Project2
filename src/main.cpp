@@ -10,21 +10,30 @@ const int gridSize = 32; // 40 to 760
 const float squareLength = gridLength / gridSize; // 22.5
 const float paletteLength = 200;
 const float paletteHeight = 400;
+const int paletteAmount = 8;
 const std::string pathToAssets = "../../src/assets/";
 int tileMap[gridSize][gridSize] = {};
 std::map<int, sf::Texture> paletteMap;
 
+sf::Texture grassTile;
+sf::Texture flowerTile;
+
 sf::RenderWindow window(sf::VideoMode(windowLength, windowLength), "Tilemap :)");
 sf::RenderWindow palette(sf::VideoMode(paletteLength, paletteHeight), "Palette :I");
 
+void loadTexture(sf::Texture *tileName, std::string tilePath, int key)
+{
+    if (!tileName->loadFromFile(pathToAssets+tilePath))
+    {
+        std::cout << "Asset: " << pathToAssets << tilePath << "failed to load\n";
+    }
+    paletteMap[key] = (*tileName);
+}
+
 void loadPalette()
 {
-    sf::Texture grassTile;
-    if (!grassTile.loadFromFile(pathToAssets+"GrassTile.png"))
-    {
-        std::cout << "darn" << std::endl;
-    }
-    paletteMap[1] = grassTile;
+    loadTexture(&grassTile, "GrassTile.png", 1);
+    loadTexture(&flowerTile, "FlowerTile.png", 2);
 }
 
 void drawGrid()
@@ -76,7 +85,7 @@ void alterGrid()
     std::tuple<int, int> tilePosition = getTilePosition();
     if (std::get<0>(tilePosition) >= 0)
     {
-        tileMap[std::get<0>(tilePosition)][std::get<1>(tilePosition)] = 1;
+        tileMap[std::get<0>(tilePosition)][std::get<1>(tilePosition)] = 2;
     }
 }
 
