@@ -8,21 +8,34 @@ const float lineWidth = 1.0f;
 const float gridLength = windowLength - (2*indentWidth); // 720
 const int gridSize = 32; // 40 to 760
 const float squareLength = gridLength / gridSize; // 22.5
+
 const float paletteLength = 200;
 const float paletteHeight = 400;
 const int paletteAcross = 2;
 const int paletteDown = 4;
 const float tileWidth = paletteLength/paletteAcross;
 const float tileHeight = paletteHeight/paletteDown;
+
+const float buttonWindowLength = 200;
+const float buttonWindowHeight = 400;
+
 const std::string pathToAssets = "../../src/assets/";
 int tileMap[gridSize][gridSize] = {};
 std::map<int, sf::Texture> paletteMap;
+int currentTile = 1;
 
 sf::Texture grassTile;
 sf::Texture flowerTile;
+sf::Texture waterTile;
+sf::Texture fishTile;
+sf::Texture roadTile;
+sf::Texture carTile;
+sf::Texture grassHumanTile;
+sf::Texture waterHumanTile;
 
 sf::RenderWindow window(sf::VideoMode(windowLength, windowLength), "Tilemap :)");
-sf::RenderWindow palette(sf::VideoMode(paletteLength, paletteHeight), "Palette :I");
+sf::RenderWindow palette(sf::VideoMode(paletteLength, paletteHeight), "Palette :p");
+sf::RenderWindow buttons(sf::VideoMode(buttonWindowLength, buttonWindowHeight), "Buttons :D");
 
 void loadTexture(sf::Texture *tileName, std::string tilePath, int key)
 {
@@ -37,12 +50,33 @@ void loadPalette()
 {
     loadTexture(&grassTile, "GrassTile.png", 1);
     loadTexture(&flowerTile, "FlowerTile.png", 2);
+    loadTexture(&waterTile, "WaterTile.png", 3);
+    loadTexture(&fishTile, "FishTile.png", 4);
+    loadTexture(&roadTile, "RoadTile.png", 5);
+    loadTexture(&carTile, "CarTile.png", 6);
+    loadTexture(&grassHumanTile, "GrassHumanTile.png", 7);
+    loadTexture(&waterHumanTile, "WaterHumanTile.png", 8);
 }
 
 void drawPaletteIndicator()
 {
     float tileMouseX = sf::Mouse::getPosition(palette).x;
     float tileMouseY = sf::Mouse::getPosition(palette).y;
+
+    // draw an indicator for which tile you have currently selected
+    sf::RectangleShape heldIndicator(sf::Vector2f(tileWidth, tileHeight));
+    int heldX = (currentTile % paletteAcross) - 1;
+    int heldY = currentTile / paletteAcross;
+    if (heldX == -1)
+    {
+        heldX = paletteAcross - 1;
+        heldY -= 1;
+    }
+    heldIndicator.setPosition(heldX*tileWidth,heldY*tileHeight);
+    heldIndicator.setFillColor(sf::Color(0, 0, 0, 100)); // transparent gray
+    palette.draw(heldIndicator);
+
+    // get the tile coordinates of the mouse on the palette
     if (tileMouseX<0 || tileMouseX>paletteLength || tileMouseY<0 || tileMouseY>paletteHeight)
     {
         return;
@@ -50,21 +84,31 @@ void drawPaletteIndicator()
     tileMouseX = int(tileMouseX / tileWidth);
     tileMouseY = int(tileMouseY / tileHeight);
 
+    // draw an indicator for the tile currently being hovered over
     sf::RectangleShape hoverIndicator(sf::Vector2f(tileWidth, tileHeight));
     hoverIndicator.setPosition(tileMouseX*tileWidth, tileMouseY*tileHeight);
     hoverIndicator.setFillColor(sf::Color(255, 255, 255, 100)); // transparent gray
     palette.draw(hoverIndicator);
+
+    // change to the selected tile
+    if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+    {
+        currentTile = tileMouseY * paletteAcross + (tileMouseX + 1);
+    }
 }
 
 void drawPalette()
 {
-    for (int i=1; i<=paletteAcross;i++)
+    for (int i=0; i<paletteDown;i++)
     {
-        sf::Sprite tile;
-        tile.setTexture(paletteMap[i]);
-        tile.setScale(sf::Vector2f(tileWidth/tile.getLocalBounds().width, tileHeight/tile.getLocalBounds().height));
-        tile.setPosition(((i-1)*tileWidth), 0);
-        palette.draw(tile);
+        for (int j=0; j<paletteAcross;j++)
+        {
+            sf::Sprite tile;
+            tile.setTexture(paletteMap[(i*paletteAcross)+j+1]);
+            tile.setScale(sf::Vector2f(tileWidth/tile.getLocalBounds().width, tileHeight/tile.getLocalBounds().height));
+            tile.setPosition((j*tileWidth), i*tileWidth);
+            palette.draw(tile);
+        }
     }
 
     drawPaletteIndicator();
@@ -119,7 +163,7 @@ void alterGrid()
     std::tuple<int, int> tilePosition = getTilePosition();
     if (std::get<0>(tilePosition) >= 0)
     {
-        tileMap[std::get<0>(tilePosition)][std::get<1>(tilePosition)] = 2;
+        tileMap[std::get<0>(tilePosition)][std::get<1>(tilePosition)] = currentTile;
     }
 }
 
@@ -132,7 +176,7 @@ void drawTiles()
             if (tileMap[i][j] > 0)
             {
                 sf::Sprite tile;
-                tile.setTexture(paletteMap[tileMap[i][j]], true);
+                tile.setTexture(paletteMap[tileMap[i][j]]);
                 tile.setScale(sf::Vector2f(squareLength/tile.getLocalBounds().width, squareLength/tile.getLocalBounds().height));
                 tile.setPosition(indentWidth+(i*squareLength), indentWidth+lineWidth+(j*squareLength));
                 window.draw(tile);
@@ -149,8 +193,9 @@ void drawTiles()
 
 int main()
 {
-    window.setPosition(sf::Vector2i(200, 0));
+    //window.setPosition(sf::Vector2i(sf::VideoMode::getDesktopMode().width*0.1, 0));
     palette.setPosition(sf::Vector2i(window.getPosition().x+windowLength+indentWidth, windowLength*0.25));
+    buttons.setPosition(sf::Vector2i(window.getPosition().x-buttonWindowLength-indentWidth, windowLength*0.25));
 
     loadPalette();
 
@@ -176,6 +221,7 @@ int main()
 
         window.clear();
         palette.clear();
+        buttons.clear();
 
         //drawing stuff here
 
@@ -200,5 +246,6 @@ int main()
 
         window.display();
         palette.display();
+        buttons.display();
     }
 }
