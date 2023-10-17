@@ -1,5 +1,6 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
+#include "button.h"
 
 const float windowLength = 800.0f;
 const float indentPercent = 0.05;
@@ -17,25 +18,106 @@ const float tileWidth = paletteLength/paletteAcross;
 const float tileHeight = paletteHeight/paletteDown;
 
 const float buttonWindowLength = 200;
-const float buttonWindowHeight = 400;
+const float buttonWindowHeight = 800;
+const float buttonLength = 100;
+const float buttonIndent = 7;
 
 const std::string pathToAssets = "../../src/assets/";
 int tileMap[gridSize][gridSize] = {};
 std::map<int, sf::Texture> paletteMap;
 int currentTile = 1;
+int selectedTile = 1;
 
-sf::Texture grassTile;
-sf::Texture flowerTile;
-sf::Texture waterTile;
-sf::Texture fishTile;
-sf::Texture roadTile;
-sf::Texture carTile;
-sf::Texture grassHumanTile;
-sf::Texture waterHumanTile;
+sf::Texture grassTile, flowerTile, waterTile, fishTile, roadTile, carTile, grassHumanTile, waterHumanTile;
+
+Button drawButton, eraseButton, eyedropButton, sizeUpButton, sizeDownButton, saveButton, loadButton;
+enum currentTool {Draw, Erase, Eyedropper};
+currentTool tool = Draw;
 
 sf::RenderWindow window(sf::VideoMode(windowLength, windowLength), "Tilemap :)");
 sf::RenderWindow palette(sf::VideoMode(paletteLength, paletteHeight), "Palette :p");
 sf::RenderWindow buttons(sf::VideoMode(buttonWindowLength, buttonWindowHeight), "Buttons :D");
+
+void Button::initButton(std::string name, float length)
+{
+    this->name = name;
+    this->length = length;
+    this->rect = sf::RectangleShape(sf::Vector2f(length, length));
+    this->rect.setFillColor(sf::Color(172,202,232));
+    this->rect.move((buttons.getSize().x - length)/2, (buttonIndent+length)*this->order);
+}
+
+void initButtons()
+{
+    drawButton.order = 0;
+    drawButton.initButton("DRAW", buttonLength);
+
+    eraseButton.order = 1;
+    eraseButton.initButton("ERASE", buttonLength);
+
+    eyedropButton.order = 2;
+    eyedropButton.initButton("EYEDROPPER", buttonLength);
+
+    sizeUpButton.order = 3;
+    sizeUpButton.initButton("BRUSH UP", buttonLength);
+
+    sizeDownButton.order = 4;
+    sizeDownButton.initButton("BRUSH DOWN", buttonLength);
+
+    saveButton.order = 5;
+    saveButton.initButton("SAVE", buttonLength);
+
+    loadButton.order = 6;
+    loadButton.initButton("LOAD", buttonLength);
+}
+
+bool Button::checkWithinBounds()
+{
+    if (sf::Mouse::getPosition(buttons).x >= this->xBounds.x && sf::Mouse::getPosition(buttons).x <= this->xBounds.y && sf::Mouse::getPosition(buttons).y >= this->yBounds.x && sf::Mouse::getPosition(buttons).y <= this->yBounds.y)
+    {
+        return true;
+    }
+    return false;
+}
+
+bool Button::checkIfClicked()
+{
+    if (this->checkWithinBounds() && sf::Mouse::isButtonPressed(sf::Mouse::Left))
+    {
+        return true;
+    }
+    return false;
+}
+
+void drawButtonAction()
+{
+    currentTile = selectedTile;
+    tool = Draw;
+}
+
+void eraseButtonAction()
+{
+    selectedTile = currentTile;
+    tool = Erase;
+}
+
+void checkButtons()
+{
+    if (drawButton.checkIfClicked())
+    {
+        drawButtonAction();
+    }
+    if (eraseButton.checkIfClicked())
+    {
+        eraseButtonAction();
+    }
+}
+
+void drawButtons()
+{
+    buttons.draw(drawButton.rect);
+    buttons.draw(eraseButton.rect);
+}
 
 void loadTexture(sf::Texture *tileName, std::string tilePath, int key)
 {
@@ -94,6 +176,7 @@ void drawPaletteIndicator()
     if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
     {
         currentTile = tileMouseY * paletteAcross + (tileMouseX + 1);
+        selectedTile = currentTile;
     }
 }
 
@@ -195,7 +278,9 @@ int main()
 {
     //window.setPosition(sf::Vector2i(sf::VideoMode::getDesktopMode().width*0.1, 0));
     palette.setPosition(sf::Vector2i(window.getPosition().x+windowLength+indentWidth, windowLength*0.25));
-    buttons.setPosition(sf::Vector2i(window.getPosition().x-buttonWindowLength-indentWidth, windowLength*0.25));
+    buttons.setPosition(sf::Vector2i(window.getPosition().x-buttonWindowLength-indentWidth, windowLength*0));
+
+    initButtons();
 
     loadPalette();
 
@@ -223,7 +308,15 @@ int main()
         palette.clear();
         buttons.clear();
 
+        if (tool == Erase)
+        {
+            currentTile = 0;
+        }
+
         //drawing stuff here
+        drawButtons();
+        checkButtons();
+
 
         //draw tiles on palette
         drawPalette();
