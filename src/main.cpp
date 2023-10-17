@@ -176,7 +176,6 @@ void drawButtons()
 
     sf::RectangleShape heldIndicator(sf::Vector2f(buttonLength, buttonLength));
     heldIndicator.setPosition(selectedButton.rect.getPosition());
-    std::cout << selectedButton.name << selectedButton.rect.getPosition().x << selectedButton.rect.getPosition().y << std::endl;
     heldIndicator.setFillColor(sf::Color(0, 0, 0, 100)); // transparent gray
     buttons.draw(heldIndicator);
 }
@@ -320,7 +319,19 @@ void alterGrid()
     {
         if (tool == Draw || tool == Erase)
         {
-            tileMap[std::get<0>(tilePosition)][std::get<1>(tilePosition)] = currentTile;
+            for (int i=(-brushSize);i<=brushSize;i++)
+            {
+                for (int j=(-brushSize);j<=brushSize;j++)
+                {
+                    if (std::get<0>(tilePosition)>=i && std::get<1>(tilePosition)>j && std::get<0>(tilePosition)<(gridSize-i) && std::get<1>(tilePosition)<(gridSize-j))
+                    {
+                        if (std::get<0>(tilePosition)+i >= 0 && std::get<0>(tilePosition)+i <= gridLength && std::get<1>(tilePosition)+j >= 0 && std::get<1>(tilePosition)+j <= gridLength)
+                        {
+                            tileMap[std::get<0>(tilePosition)+i][std::get<1>(tilePosition)+j] = currentTile;
+                        }
+                    }
+                }
+            }
         }
         else
         {
@@ -362,6 +373,8 @@ int main()
     //window.setPosition(sf::Vector2i(sf::VideoMode::getDesktopMode().width*0.1, 0));
     palette.setPosition(sf::Vector2i(window.getPosition().x+windowLength+indentWidth, windowLength*0.25));
     buttons.setPosition(sf::Vector2i(window.getPosition().x-buttonWindowLength-indentWidth, windowLength*0));
+
+    buttons.setKeyRepeatEnabled(false);
 
     initButtons();
 
