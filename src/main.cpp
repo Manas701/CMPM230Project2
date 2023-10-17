@@ -28,6 +28,9 @@ std::map<int, sf::Texture> paletteMap;
 int currentTile = 1;
 int selectedTile = 1;
 
+bool wasMousePressed = false;
+bool isMousePresssed = true;
+bool canClick = true;
 int brushSize = 0;
 
 sf::Texture grassTile, flowerTile, waterTile, fishTile, roadTile, carTile, grassHumanTile, waterHumanTile;
@@ -126,16 +129,18 @@ void eyedropButtonAction()
 
 void sizeUpAction()
 {
-    if (brushSize < 8)
+    if (brushSize < 8 && canClick == true)
     {
+        canClick = false;
         brushSize += 1;
     }
 }
 
 void sizeDownAction()
 {
-    if (brushSize > 0)
+    if (brushSize > 0 && canClick == true)
     {
+        canClick = false;
         brushSize -= 1;
     }
 }
@@ -153,6 +158,11 @@ void checkButtons()
     if (eyedropButton.checkIfClicked())
     {
         eyedropButtonAction();
+    }
+
+    if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+    {
+        canClick = true;
     }
     if (sizeUpButton.checkIfClicked())
     {
