@@ -20,7 +20,7 @@ const float tileHeight = paletteHeight/paletteDown;
 const float buttonWindowLength = 200;
 const float buttonWindowHeight = 800;
 const float buttonLength = 100;
-const float buttonIndent = 7;
+const float buttonIndent = 10;
 
 const std::string pathToAssets = "../../src/assets/";
 int tileMap[gridSize][gridSize] = {};
@@ -28,11 +28,14 @@ std::map<int, sf::Texture> paletteMap;
 int currentTile = 1;
 int selectedTile = 1;
 
+int brushSize = 0;
+
 sf::Texture grassTile, flowerTile, waterTile, fishTile, roadTile, carTile, grassHumanTile, waterHumanTile;
 
 Button drawButton, eraseButton, eyedropButton, sizeUpButton, sizeDownButton, saveButton, loadButton;
 enum currentTool {Draw, Erase, Eyedropper};
 currentTool tool = Draw;
+Button selectedButton;
 
 sf::RenderWindow window(sf::VideoMode(windowLength, windowLength), "Tilemap :)");
 sf::RenderWindow palette(sf::VideoMode(paletteLength, paletteHeight), "Palette :p");
@@ -44,13 +47,16 @@ void Button::initButton(std::string name, float length)
     this->length = length;
     this->rect = sf::RectangleShape(sf::Vector2f(length, length));
     this->rect.setFillColor(sf::Color(172,202,232));
-    this->rect.move((buttons.getSize().x - length)/2, (buttonIndent+length)*this->order);
+    this->rect.move((buttons.getSize().x - length)/2, buttonIndent+(buttonIndent+length)*this->order);
+    this->xBounds = sf::Vector2f(this->rect.getPosition().x, this->rect.getPosition().x+length);
+    this->yBounds = sf::Vector2f(this->rect.getPosition().y, this->rect.getPosition().y+length);
 }
 
 void initButtons()
 {
     drawButton.order = 0;
     drawButton.initButton("DRAW", buttonLength);
+    selectedButton = drawButton;
 
     eraseButton.order = 1;
     eraseButton.initButton("ERASE", buttonLength);
@@ -91,14 +97,47 @@ bool Button::checkIfClicked()
 
 void drawButtonAction()
 {
-    currentTile = selectedTile;
-    tool = Draw;
+    if (tool != Draw)
+    {
+        currentTile = selectedTile;
+        tool = Draw;
+        selectedButton = drawButton;
+    }
 }
 
 void eraseButtonAction()
 {
-    selectedTile = currentTile;
-    tool = Erase;
+    if (tool != Erase)
+    {
+        selectedTile = currentTile;
+        tool = Erase;
+        selectedButton = eraseButton;
+    }
+}
+
+void eyedropButtonAction()
+{
+    if (tool != Eyedropper)
+    {
+        tool = Eyedropper;
+        selectedButton = eyedropButton;
+    }
+}
+
+void sizeUpAction()
+{
+    if (brushSize < 8)
+    {
+        brushSize += 1;
+    }
+}
+
+void sizeDownAction()
+{
+    if (brushSize > 0)
+    {
+        brushSize -= 1;
+    }
 }
 
 void checkButtons()
@@ -111,12 +150,35 @@ void checkButtons()
     {
         eraseButtonAction();
     }
+    if (eyedropButton.checkIfClicked())
+    {
+        eyedropButtonAction();
+    }
+    if (sizeUpButton.checkIfClicked())
+    {
+        sizeUpAction();
+    }
+    if (sizeDownButton.checkIfClicked())
+    {
+        sizeDownAction();
+    }
 }
 
 void drawButtons()
 {
     buttons.draw(drawButton.rect);
     buttons.draw(eraseButton.rect);
+    buttons.draw(eyedropButton.rect);
+    buttons.draw(sizeUpButton.rect);
+    buttons.draw(sizeDownButton.rect);
+    buttons.draw(saveButton.rect);
+    buttons.draw(loadButton.rect);
+
+    sf::RectangleShape heldIndicator(sf::Vector2f(buttonLength, buttonLength));
+    heldIndicator.setPosition(selectedButton.rect.getPosition());
+    std::cout << selectedButton.name << selectedButton.rect.getPosition().x << selectedButton.rect.getPosition().y << std::endl;
+    heldIndicator.setFillColor(sf::Color(0, 0, 0, 100)); // transparent gray
+    buttons.draw(heldIndicator);
 }
 
 void loadTexture(sf::Texture *tileName, std::string tilePath, int key)
@@ -147,6 +209,12 @@ void drawPaletteIndicator()
 
     // draw an indicator for which tile you have currently selected
     sf::RectangleShape heldIndicator(sf::Vector2f(tileWidth, tileHeight));
+    int tempTile = currentTile;
+    if (currentTile == 0)
+    {
+        tempTile = 0;
+        currentTile = selectedTile;
+    }
     int heldX = (currentTile % paletteAcross) - 1;
     int heldY = currentTile / paletteAcross;
     if (heldX == -1)
@@ -161,6 +229,7 @@ void drawPaletteIndicator()
     // get the tile coordinates of the mouse on the palette
     if (tileMouseX<0 || tileMouseX>paletteLength || tileMouseY<0 || tileMouseY>paletteHeight)
     {
+        currentTile = tempTile;
         return;
     }
     tileMouseX = int(tileMouseX / tileWidth);
@@ -171,6 +240,9 @@ void drawPaletteIndicator()
     hoverIndicator.setPosition(tileMouseX*tileWidth, tileMouseY*tileHeight);
     hoverIndicator.setFillColor(sf::Color(255, 255, 255, 100)); // transparent gray
     palette.draw(hoverIndicator);
+
+
+    currentTile = tempTile;
 
     // change to the selected tile
     if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
@@ -246,7 +318,18 @@ void alterGrid()
     std::tuple<int, int> tilePosition = getTilePosition();
     if (std::get<0>(tilePosition) >= 0)
     {
-        tileMap[std::get<0>(tilePosition)][std::get<1>(tilePosition)] = currentTile;
+        if (tool == Draw || tool == Erase)
+        {
+            tileMap[std::get<0>(tilePosition)][std::get<1>(tilePosition)] = currentTile;
+        }
+        else
+        {
+            if (tileMap[std::get<0>(tilePosition)][std::get<1>(tilePosition)] > 0)
+            {
+                currentTile = tileMap[std::get<0>(tilePosition)][std::get<1>(tilePosition)];
+                selectedTile = currentTile;
+            }
+        }
     }
 }
 
