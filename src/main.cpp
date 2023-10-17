@@ -129,6 +129,11 @@ void eyedropButtonAction()
 
 void sizeUpAction()
 {
+    sf::RectangleShape pressIndicator(sf::Vector2f(buttonLength, buttonLength));
+    pressIndicator.setPosition(sizeUpButton.rect.getPosition());
+    pressIndicator.setFillColor(sf::Color(0, 0, 0, 100)); // transparent gray
+    buttons.draw(pressIndicator);
+
     if (brushSize < 8 && canClick == true)
     {
         canClick = false;
@@ -138,6 +143,11 @@ void sizeUpAction()
 
 void sizeDownAction()
 {
+    sf::RectangleShape pressIndicator(sf::Vector2f(buttonLength, buttonLength));
+    pressIndicator.setPosition(sizeDownButton.rect.getPosition());
+    pressIndicator.setFillColor(sf::Color(0, 0, 0, 100)); // transparent gray
+    buttons.draw(pressIndicator);
+
     if (brushSize > 0 && canClick == true)
     {
         canClick = false;
