@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <SFML/Graphics.hpp>
 #include "button.h"
 
@@ -22,7 +23,9 @@ const float buttonWindowHeight = 800;
 const float buttonLength = 100;
 const float buttonIndent = 10;
 
-const std::string pathToAssets = "../../src/assets/";
+std::string pathToAssets;
+std::string saveFileName = "save.txt";
+
 int tileMap[gridSize][gridSize] = {};
 std::map<int, sf::Texture> paletteMap;
 int currentTile = 1;
@@ -134,7 +137,7 @@ void sizeUpAction()
     pressIndicator.setFillColor(sf::Color(0, 0, 0, 100)); // transparent gray
     buttons.draw(pressIndicator);
 
-    if (brushSize < 8 && canClick == true)
+    if (brushSize < 8 && canClick)
     {
         canClick = false;
         brushSize += 1;
@@ -148,10 +151,68 @@ void sizeDownAction()
     pressIndicator.setFillColor(sf::Color(0, 0, 0, 100)); // transparent gray
     buttons.draw(pressIndicator);
 
-    if (brushSize > 0 && canClick == true)
+    if (brushSize > 0 && canClick)
     {
         canClick = false;
         brushSize -= 1;
+    }
+}
+
+void saveButtonAction()
+{
+    sf::RectangleShape pressIndicator(sf::Vector2f(buttonLength, buttonLength));
+    pressIndicator.setPosition(saveButton.rect.getPosition());
+    pressIndicator.setFillColor(sf::Color(0, 0, 0, 100)); // transparent gray
+    buttons.draw(pressIndicator);
+
+    if (canClick)
+    {
+        std::ofstream saveFile;
+        saveFile.open(pathToAssets+"../SaveFiles/"+saveFileName, std::ios::out | std::ios::trunc);
+        if (!saveFile)
+        {
+            std::cout << "Save file failed to open." << std::endl;
+            return;
+        }
+        for (int i=0;i<gridSize;i++)
+        {
+            for (int j=0;j<gridSize;j++)
+            {
+                saveFile << tileMap[i][j];
+            }
+        }
+        saveFile.close();
+    }
+}
+
+void loadButtonAction()
+{
+    sf::RectangleShape pressIndicator(sf::Vector2f(buttonLength, buttonLength));
+    pressIndicator.setPosition(loadButton.rect.getPosition());
+    pressIndicator.setFillColor(sf::Color(0, 0, 0, 100)); // transparent gray
+    buttons.draw(pressIndicator);
+
+    if (canClick)
+    {
+        std::ifstream saveFile;
+        saveFile.open(pathToAssets+"../SaveFiles/"+saveFileName, std::ios::in);
+        if (!saveFile)
+        {
+            std::cout << "Load file failed to open." << std::endl;
+            return;
+        }
+
+        std::string fullMap;
+        std::getline(saveFile, fullMap);
+        for (int i=0;i<gridSize;i++)
+        {
+            for (int j=0;j<gridSize;j++)
+            {
+                tileMap[i][j] = fullMap[0] - '0';
+                fullMap.erase(0, 1);
+            }
+        }
+        saveFile.close();
     }
 }
 
@@ -174,6 +235,7 @@ void checkButtons()
     {
         canClick = true;
     }
+
     if (sizeUpButton.checkIfClicked())
     {
         sizeUpAction();
@@ -181,6 +243,15 @@ void checkButtons()
     if (sizeDownButton.checkIfClicked())
     {
         sizeDownAction();
+    }
+
+    if (saveButton.checkIfClicked())
+    {
+        saveButtonAction();
+    }
+    if (loadButton.checkIfClicked())
+    {
+        loadButtonAction();
     }
 }
 
@@ -392,6 +463,12 @@ int main()
     //window.setPosition(sf::Vector2i(sf::VideoMode::getDesktopMode().width*0.1, 0));
     palette.setPosition(sf::Vector2i(window.getPosition().x+windowLength+indentWidth, windowLength*0.25));
     buttons.setPosition(sf::Vector2i(window.getPosition().x-buttonWindowLength-indentWidth, windowLength*0));
+
+    #if _WIN32
+        pathToAssets = "../../../src/assets/";
+    #elif __APPLE__
+        pathToAssets = "../../src/assets/";
+    #endif
 
     initButtons();
 
