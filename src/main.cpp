@@ -25,6 +25,7 @@ const float buttonIndent = 10;
 
 std::string pathToAssets;
 std::string saveFileName = "save.txt";
+sf::Font font;
 
 int tileMap[gridSize][gridSize] = {};
 std::map<int, sf::Texture> paletteMap;
@@ -50,12 +51,17 @@ sf::RenderWindow buttons(sf::VideoMode(buttonWindowLength, buttonWindowHeight), 
 void Button::initButton(std::string name, float length)
 {
     this->name = name;
+    this->text.setFont(font);
+    this->text.setString(name);
+    this->text.setCharacterSize(16);
+    this->text.setFillColor(sf::Color(136,73,143)); // plum
     this->length = length;
     this->rect = sf::RectangleShape(sf::Vector2f(length, length));
-    this->rect.setFillColor(sf::Color(172,202,232));
+    this->rect.setFillColor(sf::Color(172,202,232)); // powder blue
     this->rect.move((buttons.getSize().x - length)/2, buttonIndent+(buttonIndent+length)*this->order);
     this->xBounds = sf::Vector2f(this->rect.getPosition().x, this->rect.getPosition().x+length);
     this->yBounds = sf::Vector2f(this->rect.getPosition().y, this->rect.getPosition().y+length);
+    this->text.setPosition(this->rect.getPosition());
 }
 
 void initButtons()
@@ -258,12 +264,19 @@ void checkButtons()
 void drawButtons()
 {
     buttons.draw(drawButton.rect);
+    buttons.draw(drawButton.text);
     buttons.draw(eraseButton.rect);
+    buttons.draw(eraseButton.text);
     buttons.draw(eyedropButton.rect);
+    buttons.draw(eyedropButton.text);
     buttons.draw(sizeUpButton.rect);
+    buttons.draw(sizeUpButton.text);
     buttons.draw(sizeDownButton.rect);
+    buttons.draw(sizeDownButton.text);
     buttons.draw(saveButton.rect);
+    buttons.draw(saveButton.text);
     buttons.draw(loadButton.rect);
+    buttons.draw(loadButton.text);
 
     sf::RectangleShape heldIndicator(sf::Vector2f(buttonLength, buttonLength));
     heldIndicator.setPosition(selectedButton.rect.getPosition());
@@ -470,6 +483,12 @@ int main()
         pathToAssets = "../../src/assets/";
     #endif
 
+
+    if (!font.loadFromFile(pathToAssets+"Fonts/Monaco.ttf"))
+    {
+        std::cout << "Font failed to load." << std::endl;
+    }
+
     initButtons();
 
     loadPalette();
@@ -482,14 +501,14 @@ int main()
         {
             if (event.type == sf::Event::Closed)
             {
-                for (int i=0;i<gridSize;i++)
-                {
-                    for (int j=0;j<gridSize;j++)
-                    {
-                        std::cout << tileMap[j][i] << "  ";
-                    }
-                    std::cout << "\n";
-                }
+                // for (int i=0;i<gridSize;i++)
+                // {
+                //     for (int j=0;j<gridSize;j++)
+                //     {
+                //         std::cout << tileMap[j][i] << "  ";
+                //     }
+                //     std::cout << "\n";
+                // }
                 window.close();
             }
         }

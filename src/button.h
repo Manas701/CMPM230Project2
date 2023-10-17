@@ -14,6 +14,7 @@ class Button
         sf::Vector2f xBounds;
         sf::Vector2f yBounds;
         sf::Vector2f position;
+        sf::Text text;
         void initButton(std::string, float);
         bool checkWithinBounds();
         bool checkIfClicked();
