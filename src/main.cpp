@@ -305,8 +305,8 @@ void drawIndicator()
     std::tuple<int, int> tilePosition = getTilePosition();
     if (std::get<0>(tilePosition) >= 0)
     {
-        sf::RectangleShape hoverIndicator(sf::Vector2f(squareLength-lineWidth, squareLength-lineWidth));
-        hoverIndicator.setPosition(indentWidth+(std::get<0>(tilePosition)*squareLength), indentWidth+lineWidth+(std::get<1>(tilePosition)*squareLength));
+        sf::RectangleShape hoverIndicator(sf::Vector2f(squareLength*(2*brushSize+1)-lineWidth, squareLength*(2*brushSize+1)-lineWidth));
+        hoverIndicator.setPosition(indentWidth+((std::get<0>(tilePosition)-brushSize)*squareLength), indentWidth+lineWidth+((std::get<1>(tilePosition)-brushSize)*squareLength));
         hoverIndicator.setFillColor(sf::Color(255, 255, 255, 100)); // transparent gray
         window.draw(hoverIndicator);
     }
@@ -315,7 +315,9 @@ void drawIndicator()
 void alterGrid()
 {
     std::tuple<int, int> tilePosition = getTilePosition();
-    if (std::get<0>(tilePosition) >= 0)
+    int tilePosX = std::get<0>(tilePosition);
+    int tilePosY = std::get<1>(tilePosition);
+    if (tilePosX >= 0)
     {
         if (tool == Draw || tool == Erase)
         {
@@ -323,21 +325,18 @@ void alterGrid()
             {
                 for (int j=(-brushSize);j<=brushSize;j++)
                 {
-                    if (std::get<0>(tilePosition)>=i && std::get<1>(tilePosition)>j && std::get<0>(tilePosition)<(gridSize-i) && std::get<1>(tilePosition)<(gridSize-j))
+                    if (tilePosX+i >= 0 && tilePosX+i <= (gridSize-1) && tilePosY+j >= 0 && tilePosY+j <= (gridSize-1))
                     {
-                        if (std::get<0>(tilePosition)+i >= 0 && std::get<0>(tilePosition)+i <= gridLength && std::get<1>(tilePosition)+j >= 0 && std::get<1>(tilePosition)+j <= gridLength)
-                        {
-                            tileMap[std::get<0>(tilePosition)+i][std::get<1>(tilePosition)+j] = currentTile;
-                        }
+                        tileMap[tilePosX+i][tilePosY+j] = currentTile;
                     }
                 }
             }
         }
         else
         {
-            if (tileMap[std::get<0>(tilePosition)][std::get<1>(tilePosition)] > 0)
+            if (tileMap[tilePosX][tilePosY] > 0)
             {
-                currentTile = tileMap[std::get<0>(tilePosition)][std::get<1>(tilePosition)];
+                currentTile = tileMap[tilePosX][tilePosY];
                 selectedTile = currentTile;
             }
         }
@@ -373,8 +372,6 @@ int main()
     //window.setPosition(sf::Vector2i(sf::VideoMode::getDesktopMode().width*0.1, 0));
     palette.setPosition(sf::Vector2i(window.getPosition().x+windowLength+indentWidth, windowLength*0.25));
     buttons.setPosition(sf::Vector2i(window.getPosition().x-buttonWindowLength-indentWidth, windowLength*0));
-
-    buttons.setKeyRepeatEnabled(false);
 
     initButtons();
 
