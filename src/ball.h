@@ -7,17 +7,17 @@
 class Ball
 {
     public:
+        float radius;
         float diameter;
-        float velocity;
+        sf::Vector2f velocity;
         float acceleration;
-        sf::Vector2f direction;
         int bounces = 0;
         sf::CircleShape sprite;
         sf::Vector2f resetPosition;
         void Init();
         void Reset();
         void Serve();
-        void Update();
+        void Update(float);
 };
 
 #endif
