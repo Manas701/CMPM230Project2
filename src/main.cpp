@@ -1,50 +1,70 @@
 #include <iostream>
 #include <fstream>
 #include <SFML/Graphics.hpp>
+#include "ball.h"
 
 std::string pathToAssets;
 
 const float windowLength = 800.0f;
 const float windowHeight = 600.0f;
-const float ballDiameter = 5.0f;
 
-// OBJECTIFY THIS
-const float ballVelocity = 10.0f;
+Ball ball;
+
+const float ballDiameter = 5.0f;
+const float ballStartVelocity = 10.0f;
+const float ballAcceleration = 1.0f;
 
 enum Side {Left, Right};
 Side winningSide = Right;
 
 sf::RenderWindow window(sf::VideoMode(windowLength, windowHeight), "PONG!", sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize);
-sf::CircleShape ball(ballDiameter);
 
 void InitWindow()
 {
-    std::cout << "Initializing window\n";
     window.setFramerateLimit(60);
-    std::cout << "Window initialized\n";
 }
 
-void BallReset()
+void Ball::Init()
 {
-    ball.setPosition(sf::Vector2f(windowLength/2-ballDiameter, windowHeight/2-ballDiameter));
+    this->diameter = ballDiameter;
+    this->velocity = ballStartVelocity;
+    this->acceleration = ballAcceleration;
+    this->bounces = 0;
+    this->sprite = sf::CircleShape(ballDiameter);
+    this->Reset();
 }
 
-void Serve()
+void Ball::Reset()
+{
+    this->sprite.setPosition(sf::Vector2f((windowLength/2) - this->diameter, (windowHeight/2) - this->diameter));
+}
+
+void Ball::Update()
 {
 
+}
+
+
+void Ball::Serve()
+{
+
+}
+
+void InitObjects()
+{
+    InitWindow();
+    ball.Init();
 }
 
 
 void SpaceDebugCommand()
 {
-    BallReset();
+    ball.Reset();
 }
 
 int main()
 {
-    std::cout << "Beginning of main\n";
-
-    InitWindow();
+    InitObjects();
 
      #if _WIN32
         pathToAssets = "../../../src/assets/";
@@ -70,7 +90,7 @@ int main()
             SpaceDebugCommand();
         }
 
-        window.draw(ball);
+        window.draw(ball.sprite);
 
         window.display();
     }
