@@ -17,7 +17,8 @@ class Ball
         void Init();
         void Reset();
         void Serve();
-        void Update(float);
+        void Update();
+        void CheckServe();
 };
 
 #endif

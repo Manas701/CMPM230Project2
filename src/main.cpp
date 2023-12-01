@@ -2,25 +2,40 @@
 #include <fstream>
 #include <SFML/Graphics.hpp>
 #include "ball.h"
+#include "score.h"
 
 sf::Clock deltaClock;
 std::string pathToAssets;
+sf::Font scoreFont;
+int fontSize = 48;
 
 const float windowLength = 800.0f;
 const float windowHeight = 600.0f;
+const sf::Color ballColor(93, 115, 126);
 
 Ball ball;
 
+const float ballThickness = 2.0f;
 const float ballRadius = 5.0f;
 const sf::Vector2f ballStartVelocity(100.0f, 200.0f);
 const float ballAcceleration = 1.0f;
 
+Score score;
+
+sf::Vector2f leftScorePos(windowLength/4, 50.0f);
+sf::Vector2f rightScorePos(windowLength*3/4, 50.0f);
+
+float dt;
+
+const float scoreTime = 1.0f;
+const float serveTime = 0.5f;
+
 enum Side {LEFT, RIGHT};
 Side winningSide = RIGHT;
 
-enum GameState {PLAY, SCORE, SERVE, PAUSE};
+enum GameState {PAUSE, PLAY, SCORE, SERVE};
 GameState prevState;
-GameState currState = PLAY;
+GameState currState = SERVE;
 
 bool canClick = true;
 
@@ -31,6 +46,24 @@ void InitWindow()
     window.setFramerateLimit(120u);
 }
 
+void ScoreGoal(Side scoredSide)
+{
+    winningSide = scoredSide;
+    if (scoredSide == LEFT)
+    {
+        score.leftScore++;
+    }
+    else
+    {
+        score.rightScore++;
+    }
+    
+    std::cout << "Left Score: " << score.leftScore << " || Right Score: " << score.rightScore << std::endl;
+    
+    ball.Reset();
+    ball.Serve();
+}
+
 void Ball::Init()
 {
     this->radius = ballRadius;
@@ -38,17 +71,21 @@ void Ball::Init()
     this->acceleration = ballAcceleration;
     this->bounces = 0;
     this->sprite = sf::CircleShape(ballRadius);
+    // this->sprite.setOutlineColor(sf::Color::Black);
+    // this->sprite.setOutlineThickness(2.0f);
+    this->sprite.setFillColor(ballColor);
     this->Reset();
     this->Serve();
 }
 
 void Ball::Reset()
 {
+    currState = SERVE;
     this->sprite.setPosition(sf::Vector2f((windowLength/2) - this->radius, (windowHeight/2) - this->radius));
     this->velocity = sf::Vector2f();
 }
 
-void Ball::Update(float dt)
+void Ball::Update()
 {
     this->sprite.move(this->velocity*dt);
 
@@ -63,15 +100,11 @@ void Ball::Update(float dt)
     // Checking if colliding with horizontal bounds
     if ((currX+this->diameter <= 0))
     {
-        winningSide = RIGHT;
-        ball.Reset();
-        ball.Serve();
+        ScoreGoal(RIGHT);
     }
     else if ((currX) >= windowLength)
     {
-        winningSide = LEFT;
-        ball.Reset();
-        ball.Serve();
+        ScoreGoal(LEFT);
     }
 }
 
@@ -82,16 +115,50 @@ void Ball::Serve()
     this->velocity = sf::Vector2f(xVel, ballStartVelocity.y);
 }
 
+void Ball::CheckServe()
+{
+    if (dt >= serveTime)
+    {
+        currState = PLAY;
+        deltaClock.restart();
+    }
+}
+
+void Score::Init()
+{
+    this->leftScore = 0;
+    this->rightScore = 0;
+    this->leftNum.setFont(scoreFont);
+    this->rightNum.setFont(scoreFont);
+    this->leftNum.setCharacterSize(fontSize);
+    this->rightNum.setCharacterSize(fontSize);
+    this->leftNum.setString(std::to_string(this->leftScore));
+    this->rightNum.setString(std::to_string(this->rightScore));
+
+    this->leftNum.setPosition(leftScorePos);
+    this->rightNum.setPosition(rightScorePos);
+}
+
 void InitObjects()
 {
     InitWindow();
+    score.Init();
     ball.Init();
 }
 
 void GameUpdate()
 {
-    float dt = deltaClock.restart().asSeconds();
-    ball.Update(dt);
+    dt = deltaClock.getElapsedTime().asSeconds();
+    // std::cout << dt << std::endl;
+    if (currState == PLAY)
+    {
+        deltaClock.restart();
+        ball.Update();
+    }
+    else if (currState == SERVE)
+    {
+        ball.CheckServe();
+    }
 }
 
 void CheckPause()
@@ -116,21 +183,20 @@ void CheckPause()
     }
 }
 
-// void SpaceDebugCommand()
-// {
-//     ball.Reset();
-// }
-
 int main()
 {
-    InitObjects();
-
      #if _WIN32
         pathToAssets = "../../../src/assets/";
     #elif __APPLE__
         pathToAssets = "../../src/assets/";
     #endif
 
+    if (!scoreFont.loadFromFile(pathToAssets+"Fonts/Pong.ttf"))
+    {
+        std::cout << "Font failed to load." << std::endl;
+    }
+
+    InitObjects();
 
     deltaClock.restart();
     while (window.isOpen())
@@ -148,16 +214,13 @@ int main()
 
         CheckPause();
 
-        // if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
-        // {
-        //     SpaceDebugCommand();
-        // }
-
         if (currState != PAUSE)
         {
             GameUpdate();
         }
 
+        window.draw(score.leftNum);
+        window.draw(score.rightNum);
         window.draw(ball.sprite);
 
         window.display();
