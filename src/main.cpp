@@ -1,553 +1,77 @@
 #include <iostream>
 #include <fstream>
 #include <SFML/Graphics.hpp>
-#include "button.h"
-
-const float windowLength = 800.0f;
-const float indentPercent = 0.05;
-const float indentWidth = windowLength * indentPercent; // 40
-const float lineWidth = 1.0f;
-const float gridLength = windowLength - (2*indentWidth); // 720
-const int gridSize = 32; // 40 to 760
-const float squareLength = gridLength / gridSize; // 22.5
-
-const float paletteLength = 200;
-const float paletteHeight = 400;
-const int paletteAcross = 2;
-const int paletteDown = 4;
-const float tileWidth = paletteLength/paletteAcross;
-const float tileHeight = paletteHeight/paletteDown;
-
-const float buttonWindowLength = 200;
-const float buttonWindowHeight = 800;
-const float buttonLength = 100;
-const float buttonIndent = 10;
 
 std::string pathToAssets;
-std::string saveFileName = "save.txt";
-sf::Font font;
 
-int tileMap[gridSize][gridSize] = {};
-std::map<int, sf::Texture> paletteMap;
-int currentTile = 1;
-int selectedTile = 1;
+const float windowLength = 800.0f;
+const float windowHeight = 600.0f;
+const float ballDiameter = 5.0f;
 
-bool wasMousePressed = false;
-bool isMousePresssed = true;
-bool canClick = true;
-int brushSize = 0;
+// OBJECTIFY THIS
+const float ballVelocity = 10.0f;
 
-sf::Texture grassTile, flowerTile, waterTile, fishTile, roadTile, carTile, grassHumanTile, waterHumanTile;
+enum Side {Left, Right};
+Side winningSide = Right;
 
-Button drawButton, eraseButton, eyedropButton, sizeUpButton, sizeDownButton, saveButton, loadButton;
-enum currentTool {Draw, Erase, Eyedropper};
-currentTool tool = Draw;
-Button selectedButton;
+sf::RenderWindow window(sf::VideoMode(windowLength, windowHeight), "PONG!", sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize);
+sf::CircleShape ball(ballDiameter);
 
-sf::RenderWindow window(sf::VideoMode(windowLength, windowLength), "Tilemap :)");
-sf::RenderWindow palette(sf::VideoMode(paletteLength, paletteHeight), "Palette :p");
-sf::RenderWindow buttons(sf::VideoMode(buttonWindowLength, buttonWindowHeight), "Buttons :D");
-
-void Button::initButton(std::string name, float length)
+void InitWindow()
 {
-    this->name = name;
-    this->text.setFont(font);
-    this->text.setString(name);
-    this->text.setCharacterSize(16);
-    this->text.setFillColor(sf::Color(136,73,143)); // plum
-    this->length = length;
-    this->rect = sf::RectangleShape(sf::Vector2f(length, length));
-    this->rect.setFillColor(sf::Color(172,202,232)); // powder blue
-    this->rect.move((buttons.getSize().x - length)/2, buttonIndent+(buttonIndent+length)*this->order);
-    this->xBounds = sf::Vector2f(this->rect.getPosition().x, this->rect.getPosition().x+length);
-    this->yBounds = sf::Vector2f(this->rect.getPosition().y, this->rect.getPosition().y+length);
-    this->text.setPosition(this->rect.getPosition());
+    std::cout << "Initializing window\n";
+    window.setFramerateLimit(60);
+    std::cout << "Window initialized\n";
 }
 
-void initButtons()
+void BallReset()
 {
-    drawButton.order = 0;
-    drawButton.initButton("DRAW", buttonLength);
-    selectedButton = drawButton;
-
-    eraseButton.order = 1;
-    eraseButton.initButton("ERASE", buttonLength);
-
-    eyedropButton.order = 2;
-    eyedropButton.initButton("EYEDROPPER", buttonLength);
-
-    sizeUpButton.order = 3;
-    sizeUpButton.initButton("BRUSH UP", buttonLength);
-
-    sizeDownButton.order = 4;
-    sizeDownButton.initButton("BRUSH DOWN", buttonLength);
-
-    saveButton.order = 5;
-    saveButton.initButton("SAVE", buttonLength);
-
-    loadButton.order = 6;
-    loadButton.initButton("LOAD", buttonLength);
+    ball.setPosition(sf::Vector2f(windowLength/2-ballDiameter, windowHeight/2-ballDiameter));
 }
 
-bool Button::checkWithinBounds()
+void Serve()
 {
-    if (sf::Mouse::getPosition(buttons).x >= this->xBounds.x && sf::Mouse::getPosition(buttons).x <= this->xBounds.y && sf::Mouse::getPosition(buttons).y >= this->yBounds.x && sf::Mouse::getPosition(buttons).y <= this->yBounds.y)
-    {
-        return true;
-    }
-    return false;
+
 }
 
-bool Button::checkIfClicked()
+
+void SpaceDebugCommand()
 {
-    if (this->checkWithinBounds() && sf::Mouse::isButtonPressed(sf::Mouse::Left))
-    {
-        return true;
-    }
-    return false;
-}
-
-void drawButtonAction()
-{
-    if (tool != Draw)
-    {
-        currentTile = selectedTile;
-        tool = Draw;
-        selectedButton = drawButton;
-    }
-}
-
-void eraseButtonAction()
-{
-    if (tool != Erase)
-    {
-        selectedTile = currentTile;
-        tool = Erase;
-        selectedButton = eraseButton;
-    }
-}
-
-void eyedropButtonAction()
-{
-    if (tool != Eyedropper)
-    {
-        tool = Eyedropper;
-        selectedButton = eyedropButton;
-    }
-}
-
-void sizeUpAction()
-{
-    sf::RectangleShape pressIndicator(sf::Vector2f(buttonLength, buttonLength));
-    pressIndicator.setPosition(sizeUpButton.rect.getPosition());
-    pressIndicator.setFillColor(sf::Color(0, 0, 0, 100)); // transparent gray
-    buttons.draw(pressIndicator);
-
-    if (brushSize < 8 && canClick)
-    {
-        canClick = false;
-        brushSize += 1;
-    }
-}
-
-void sizeDownAction()
-{
-    sf::RectangleShape pressIndicator(sf::Vector2f(buttonLength, buttonLength));
-    pressIndicator.setPosition(sizeDownButton.rect.getPosition());
-    pressIndicator.setFillColor(sf::Color(0, 0, 0, 100)); // transparent gray
-    buttons.draw(pressIndicator);
-
-    if (brushSize > 0 && canClick)
-    {
-        canClick = false;
-        brushSize -= 1;
-    }
-}
-
-void saveButtonAction()
-{
-    sf::RectangleShape pressIndicator(sf::Vector2f(buttonLength, buttonLength));
-    pressIndicator.setPosition(saveButton.rect.getPosition());
-    pressIndicator.setFillColor(sf::Color(0, 0, 0, 100)); // transparent gray
-    buttons.draw(pressIndicator);
-
-    if (canClick)
-    {
-        std::ofstream saveFile;
-        saveFile.open(pathToAssets+"../SaveFiles/"+saveFileName, std::ios::out | std::ios::trunc);
-        if (!saveFile)
-        {
-            std::cout << "Save file failed to open." << std::endl;
-            return;
-        }
-        for (int i=0;i<gridSize;i++)
-        {
-            for (int j=0;j<gridSize;j++)
-            {
-                saveFile << tileMap[i][j];
-            }
-        }
-        saveFile.close();
-    }
-}
-
-void loadButtonAction()
-{
-    sf::RectangleShape pressIndicator(sf::Vector2f(buttonLength, buttonLength));
-    pressIndicator.setPosition(loadButton.rect.getPosition());
-    pressIndicator.setFillColor(sf::Color(0, 0, 0, 100)); // transparent gray
-    buttons.draw(pressIndicator);
-
-    if (canClick)
-    {
-        std::ifstream saveFile;
-        saveFile.open(pathToAssets+"../SaveFiles/"+saveFileName, std::ios::in);
-        if (!saveFile)
-        {
-            std::cout << "Load file failed to open." << std::endl;
-            return;
-        }
-
-        std::string fullMap;
-        std::getline(saveFile, fullMap);
-        for (int i=0;i<gridSize;i++)
-        {
-            for (int j=0;j<gridSize;j++)
-            {
-                tileMap[i][j] = fullMap[0] - '0';
-                fullMap.erase(0, 1);
-            }
-        }
-        saveFile.close();
-    }
-}
-
-void checkButtons()
-{
-    if (drawButton.checkIfClicked())
-    {
-        drawButtonAction();
-    }
-    if (eraseButton.checkIfClicked())
-    {
-        eraseButtonAction();
-    }
-    if (eyedropButton.checkIfClicked())
-    {
-        eyedropButtonAction();
-    }
-
-    if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
-    {
-        canClick = true;
-    }
-
-    if (sizeUpButton.checkIfClicked())
-    {
-        sizeUpAction();
-    }
-    if (sizeDownButton.checkIfClicked())
-    {
-        sizeDownAction();
-    }
-
-    if (saveButton.checkIfClicked())
-    {
-        saveButtonAction();
-    }
-    if (loadButton.checkIfClicked())
-    {
-        loadButtonAction();
-    }
-}
-
-void drawButtons()
-{
-    buttons.draw(drawButton.rect);
-    buttons.draw(drawButton.text);
-    buttons.draw(eraseButton.rect);
-    buttons.draw(eraseButton.text);
-    buttons.draw(eyedropButton.rect);
-    buttons.draw(eyedropButton.text);
-    buttons.draw(sizeUpButton.rect);
-    buttons.draw(sizeUpButton.text);
-    buttons.draw(sizeDownButton.rect);
-    buttons.draw(sizeDownButton.text);
-    buttons.draw(saveButton.rect);
-    buttons.draw(saveButton.text);
-    buttons.draw(loadButton.rect);
-    buttons.draw(loadButton.text);
-
-    sf::RectangleShape heldIndicator(sf::Vector2f(buttonLength, buttonLength));
-    heldIndicator.setPosition(selectedButton.rect.getPosition());
-    heldIndicator.setFillColor(sf::Color(0, 0, 0, 100)); // transparent gray
-    buttons.draw(heldIndicator);
-}
-
-void loadTexture(sf::Texture *tileName, std::string tilePath, int key)
-{
-    if (!tileName->loadFromFile(pathToAssets+tilePath))
-    {
-        std::cout << "Asset: " << pathToAssets << tilePath << "failed to load\n";
-    }
-    paletteMap[key] = (*tileName);
-}
-
-void loadPalette()
-{
-    loadTexture(&grassTile, "GrassTile.png", 1);
-    loadTexture(&flowerTile, "FlowerTile.png", 2);
-    loadTexture(&waterTile, "WaterTile.png", 3);
-    loadTexture(&fishTile, "FishTile.png", 4);
-    loadTexture(&roadTile, "RoadTile.png", 5);
-    loadTexture(&carTile, "CarTile.png", 6);
-    loadTexture(&grassHumanTile, "GrassHumanTile.png", 7);
-    loadTexture(&waterHumanTile, "WaterHumanTile.png", 8);
-}
-
-void drawPaletteIndicator()
-{
-    float tileMouseX = sf::Mouse::getPosition(palette).x;
-    float tileMouseY = sf::Mouse::getPosition(palette).y;
-
-    // draw an indicator for which tile you have currently selected
-    sf::RectangleShape heldIndicator(sf::Vector2f(tileWidth, tileHeight));
-    int tempTile = currentTile;
-    if (currentTile == 0)
-    {
-        tempTile = 0;
-        currentTile = selectedTile;
-    }
-    int heldX = (currentTile % paletteAcross) - 1;
-    int heldY = currentTile / paletteAcross;
-    if (heldX == -1)
-    {
-        heldX = paletteAcross - 1;
-        heldY -= 1;
-    }
-    heldIndicator.setPosition(heldX*tileWidth,heldY*tileHeight);
-    heldIndicator.setFillColor(sf::Color(0, 0, 0, 100)); // transparent gray
-    palette.draw(heldIndicator);
-
-    // get the tile coordinates of the mouse on the palette
-    if (tileMouseX<0 || tileMouseX>paletteLength || tileMouseY<0 || tileMouseY>paletteHeight)
-    {
-        currentTile = tempTile;
-        return;
-    }
-    tileMouseX = int(tileMouseX / tileWidth);
-    tileMouseY = int(tileMouseY / tileHeight);
-
-    // draw an indicator for the tile currently being hovered over
-    sf::RectangleShape hoverIndicator(sf::Vector2f(tileWidth, tileHeight));
-    hoverIndicator.setPosition(tileMouseX*tileWidth, tileMouseY*tileHeight);
-    hoverIndicator.setFillColor(sf::Color(255, 255, 255, 100)); // transparent gray
-    palette.draw(hoverIndicator);
-
-
-    currentTile = tempTile;
-
-    // change to the selected tile
-    if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-    {
-        currentTile = tileMouseY * paletteAcross + (tileMouseX + 1);
-        selectedTile = currentTile;
-    }
-}
-
-void drawPalette()
-{
-    for (int i=0; i<paletteDown;i++)
-    {
-        for (int j=0; j<paletteAcross;j++)
-        {
-            sf::Sprite tile;
-            tile.setTexture(paletteMap[(i*paletteAcross)+j+1]);
-            tile.setScale(sf::Vector2f(tileWidth/tile.getLocalBounds().width, tileHeight/tile.getLocalBounds().height));
-            tile.setPosition((j*tileWidth), i*tileWidth);
-            palette.draw(tile);
-        }
-    }
-
-    drawPaletteIndicator();
-}
-
-void drawGrid()
-{
-    sf::RectangleShape line(sf::Vector2f(gridLength, lineWidth));
-
-    for (int i=0; i <= gridSize; i++)
-    {
-        // draw a horizontal line
-        line.setRotation(0);
-        line.setPosition(0, gridLength/gridSize * i);
-        line.move(indentWidth, indentWidth);
-        window.draw(line);
-
-        // draw a vertical line
-        line.setRotation(90);
-        line.setPosition(gridLength/gridSize * i, 0);
-        line.move(indentWidth, indentWidth);
-        window.draw(line);
-    }
-}
-
-std::tuple<int, int> getTilePosition()
-{
-    float gridPosX = sf::Mouse::getPosition(window).x - indentWidth;
-    float gridPosY = sf::Mouse::getPosition(window).y - indentWidth;
-    // if mouse is not within grid, don't give a tile position
-    if (gridPosX < 0 || gridPosX > gridLength || gridPosY < 0 || gridPosY > gridLength)
-    {
-        return std::make_tuple(-1,-1);
-    }
-    return std::make_tuple(gridPosX / squareLength, gridPosY / squareLength);
-}
-
-void drawIndicator()
-{
-    std::tuple<int, int> tilePosition = getTilePosition();
-    if (std::get<0>(tilePosition) >= 0)
-    {
-        sf::RectangleShape hoverIndicator(sf::Vector2f(squareLength*(2*brushSize+1)-lineWidth, squareLength*(2*brushSize+1)-lineWidth));
-        hoverIndicator.setPosition(indentWidth+((std::get<0>(tilePosition)-brushSize)*squareLength), indentWidth+lineWidth+((std::get<1>(tilePosition)-brushSize)*squareLength));
-        hoverIndicator.setFillColor(sf::Color(255, 255, 255, 100)); // transparent gray
-        window.draw(hoverIndicator);
-    }
-}
-
-void alterGrid()
-{
-    std::tuple<int, int> tilePosition = getTilePosition();
-    int tilePosX = std::get<0>(tilePosition);
-    int tilePosY = std::get<1>(tilePosition);
-    if (tilePosX >= 0)
-    {
-        if (tool == Draw || tool == Erase)
-        {
-            for (int i=(-brushSize);i<=brushSize;i++)
-            {
-                for (int j=(-brushSize);j<=brushSize;j++)
-                {
-                    if (tilePosX+i >= 0 && tilePosX+i <= (gridSize-1) && tilePosY+j >= 0 && tilePosY+j <= (gridSize-1))
-                    {
-                        tileMap[tilePosX+i][tilePosY+j] = currentTile;
-                    }
-                }
-            }
-        }
-        else
-        {
-            if (tileMap[tilePosX][tilePosY] > 0)
-            {
-                currentTile = tileMap[tilePosX][tilePosY];
-                selectedTile = currentTile;
-            }
-        }
-    }
-}
-
-void drawTiles()
-{
-    for (int i=0;i<gridSize;i++)
-    {
-        for (int j=0;j<gridSize;j++)
-        {
-            if (tileMap[i][j] > 0)
-            {
-                sf::Sprite tile;
-                tile.setTexture(paletteMap[tileMap[i][j]]);
-                tile.setScale(sf::Vector2f(squareLength/tile.getLocalBounds().width, squareLength/tile.getLocalBounds().height));
-                tile.setPosition(indentWidth+(i*squareLength), indentWidth+lineWidth+(j*squareLength));
-                window.draw(tile);
-            }
-            else {
-                sf::RectangleShape emptyTile(sf::Vector2f(squareLength-lineWidth, squareLength-lineWidth));
-                emptyTile.setPosition(indentWidth+(i*squareLength), indentWidth+lineWidth+(j*squareLength));
-                emptyTile.setFillColor(sf::Color(0, 0, 0)); // black
-                window.draw(emptyTile);
-            }
-        }
-    }
+    BallReset();
 }
 
 int main()
 {
-    //window.setPosition(sf::Vector2i(sf::VideoMode::getDesktopMode().width*0.1, 0));
-    palette.setPosition(sf::Vector2i(window.getPosition().x+windowLength+indentWidth, windowLength*0.25));
-    buttons.setPosition(sf::Vector2i(window.getPosition().x-buttonWindowLength-indentWidth, windowLength*0));
+    std::cout << "Beginning of main\n";
 
-    #if _WIN32
+    InitWindow();
+
+     #if _WIN32
         pathToAssets = "../../../src/assets/";
     #elif __APPLE__
         pathToAssets = "../../src/assets/";
     #endif
 
-
-    if (!font.loadFromFile(pathToAssets+"Fonts/Monaco.ttf"))
-    {
-        std::cout << "Font failed to load." << std::endl;
-    }
-
-    initButtons();
-
-    loadPalette();
-
     while (window.isOpen())
     {
-
         sf::Event event;
         while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
             {
-                // for (int i=0;i<gridSize;i++)
-                // {
-                //     for (int j=0;j<gridSize;j++)
-                //     {
-                //         std::cout << tileMap[j][i] << "  ";
-                //     }
-                //     std::cout << "\n";
-                // }
                 window.close();
             }
         }
 
         window.clear();
-        palette.clear();
-        buttons.clear();
 
-        if (tool == Erase)
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
         {
-            currentTile = 0;
+            SpaceDebugCommand();
         }
 
-        //drawing stuff here
-        drawButtons();
-        checkButtons();
-
-
-        //draw tiles on palette
-        drawPalette();
-
-        //draw grid
-        drawGrid();
-
-        //alter arrays to represent drawn tiles
-        if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-        {
-            alterGrid();
-        }
-
-        //draw painted tiles
-        drawTiles();
-
-        //draw transparent gray box over selected tile
-        drawIndicator();
-
+        window.draw(ball);
 
         window.display();
-        palette.display();
-        buttons.display();
     }
 }
