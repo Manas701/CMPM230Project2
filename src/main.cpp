@@ -2,6 +2,7 @@
 #include <fstream>
 #include <SFML/Graphics.hpp>
 #include "ball.h"
+#include "paddle.h"
 #include "score.h"
 
 sf::Clock deltaClock;
@@ -13,12 +14,23 @@ const float windowLength = 800.0f;
 const float windowHeight = 600.0f;
 const sf::Color ballColor(93, 115, 126);
 
+const int fadeSpeed = 3;
+bool fadedOut;
+
 Ball ball;
 
 const float ballThickness = 2.0f;
 const float ballRadius = 5.0f;
-const sf::Vector2f ballStartVelocity(100.0f, 200.0f);
-const float ballAcceleration = 1.0f;
+const sf::Vector2f ballStartVelocity(400.0f, 200.0f);
+const float ballAcceleration = 20.0f;
+
+Paddle leftPaddle, rightPaddle;
+
+const float paddleHeight = 50.0f;
+const float paddleWidth = 5.0f;
+const float paddleSpeed = 3.0f;
+const sf::Vector2f leftPaddlePos(50.0f, windowHeight/2);
+const sf::Vector2f rightPaddlePos(windowLength - 50.0f, windowHeight/2);
 
 Score score;
 
@@ -30,10 +42,10 @@ float dt;
 const float scoreTime = 1.0f;
 const float serveTime = 0.5f;
 
-enum Side {LEFT, RIGHT};
+// enum Side {LEFT, RIGHT};
 Side winningSide = RIGHT;
 
-enum GameState {PAUSE, PLAY, SCORE, SERVE};
+enum GameState {FADEIN, FADEOUT, PAUSE, PLAY, SERVE};
 GameState prevState;
 GameState currState = SERVE;
 
@@ -48,20 +60,10 @@ void InitWindow()
 
 void ScoreGoal(Side scoredSide)
 {
+    currState = FADEOUT;
     winningSide = scoredSide;
-    if (scoredSide == LEFT)
-    {
-        score.leftScore++;
-    }
-    else
-    {
-        score.rightScore++;
-    }
-    
-    std::cout << "Left Score: " << score.leftScore << " || Right Score: " << score.rightScore << std::endl;
-    
-    ball.Reset();
-    ball.Serve();
+
+    score.FadeOut();
 }
 
 void Ball::Init()
@@ -81,6 +83,7 @@ void Ball::Init()
 void Ball::Reset()
 {
     currState = SERVE;
+    this->bounces = 0;
     this->sprite.setPosition(sf::Vector2f((windowLength/2) - this->radius, (windowHeight/2) - this->radius));
     this->velocity = sf::Vector2f();
 }
@@ -106,6 +109,7 @@ void Ball::Update()
     {
         ScoreGoal(LEFT);
     }
+
 }
 
 
@@ -124,6 +128,53 @@ void Ball::CheckServe()
     }
 }
 
+void Paddle::Init()
+{
+    this->height = paddleHeight;
+    this->width = paddleWidth;
+    this->speed = paddleSpeed;
+    this->sprite = sf::RectangleShape(sf::Vector2f(paddleWidth, paddleHeight));
+    if (this->side == LEFT)
+    {
+        this->sprite.setPosition(leftPaddlePos);
+        this->upKey = sf::Keyboard::W;
+        this->downKey = sf::Keyboard::S;
+    }
+    else
+    {
+        this->sprite.setPosition(rightPaddlePos);
+        this->upKey = sf::Keyboard::Up;
+        this->downKey = sf::Keyboard::Down;
+    }
+
+}
+
+void Paddle::Update()
+{
+    if (sf::Keyboard::isKeyPressed(this->upKey))
+    {
+        this->sprite.move(sf::Vector2f(0, -this->speed));
+        if (this->sprite.getPosition().y < 0)
+        {
+            this->sprite.setPosition(sf::Vector2f(this->sprite.getPosition().x, 0));
+        }
+    }
+    if (sf::Keyboard::isKeyPressed(this->downKey))
+    {
+        this->sprite.move(sf::Vector2f(0, this->speed));
+        if (this->sprite.getPosition().y+this->height > windowHeight)
+        {
+            this->sprite.setPosition(sf::Vector2f(this->sprite.getPosition().x, windowHeight-this->height));
+        }
+    }
+
+    // Checking if colliding with ball
+    if (ball.sprite.getGlobalBounds().intersects(this->sprite.getGlobalBounds()) && ((this->side == LEFT && ball.velocity.x<0) || (this->side == RIGHT && ball.velocity.x>0)))
+    {
+        ball.velocity = sf::Vector2f(-ball.velocity.x + ball.acceleration, ball.velocity.y + ball.acceleration);
+    }
+}
+
 void Score::Init()
 {
     this->leftScore = 0;
@@ -139,11 +190,71 @@ void Score::Init()
     this->rightNum.setPosition(rightScorePos);
 }
 
+// tween to fade score in
+void Score::FadeOut()
+{
+    sf::Color ogColor = this->leftNum.getFillColor();
+    if (ogColor.a > 0)
+    {
+        ogColor.a -= fadeSpeed;
+        if (ogColor.a < 0)
+        {
+            ogColor.a = 0;
+        }
+        this->leftNum.setFillColor(ogColor);
+        this->rightNum.setFillColor(ogColor);
+    }
+    else
+    {
+        if (winningSide == LEFT)
+        {
+            score.leftScore++;
+            score.leftNum.setString(std::to_string(score.leftScore));
+        }
+        else
+        {
+            score.rightScore++;
+            score.rightNum.setString(std::to_string(score.rightScore));
+        }
+        currState = FADEIN;
+        FadeIn();
+    }
+}
+
+// tween to fade score in
+void Score::FadeIn()
+{
+    sf::Color ogColor = this->leftNum.getFillColor();
+    if (ogColor.a < 255)
+    {
+        ogColor.a += fadeSpeed;
+        if (ogColor.a > 255)
+        {
+            ogColor.a = 255;
+        }
+        this->leftNum.setFillColor(ogColor);
+        this->rightNum.setFillColor(ogColor);
+    }
+    else
+    {
+        if (dt >= scoreTime)
+        {
+            deltaClock.restart();
+            ball.Reset();
+            ball.Serve();
+        }
+    }
+}
+
 void InitObjects()
 {
     InitWindow();
     score.Init();
     ball.Init();
+    leftPaddle.side = LEFT;
+    leftPaddle.Init();
+    rightPaddle.side = RIGHT;
+    rightPaddle.Init();
 }
 
 void GameUpdate()
@@ -159,6 +270,16 @@ void GameUpdate()
     {
         ball.CheckServe();
     }
+    else if (currState == FADEOUT)
+    {
+        score.FadeOut();
+    }
+    else if (currState == FADEIN)
+    {
+        score.FadeIn();
+    }
+    leftPaddle.Update();
+    rightPaddle.Update();
 }
 
 void CheckPause()
@@ -181,6 +302,16 @@ void CheckPause()
     {
         canClick = true;
     }
+}
+
+void DrawObjects()
+{
+    window.draw(score.leftNum);
+    window.draw(score.rightNum);
+
+    window.draw(leftPaddle.sprite);
+    window.draw(rightPaddle.sprite);
+    window.draw(ball.sprite);
 }
 
 int main()
@@ -219,9 +350,7 @@ int main()
             GameUpdate();
         }
 
-        window.draw(score.leftNum);
-        window.draw(score.rightNum);
-        window.draw(ball.sprite);
+        DrawObjects();
 
         window.display();
     }

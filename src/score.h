@@ -14,6 +14,8 @@ class Score
         void Init();
         void Flash();
         void CheckScore();
+        void FadeOut();
+        void FadeIn();
 };
 
 #endif

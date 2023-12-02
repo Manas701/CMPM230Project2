@@ -14,6 +14,7 @@ class Ball
         int bounces = 0;
         sf::CircleShape sprite;
         sf::Vector2f resetPosition;
+        bool inPaddle = false;
         void Init();
         void Reset();
         void Serve();
