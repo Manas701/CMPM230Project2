@@ -21,8 +21,11 @@ Ball ball;
 
 const float ballThickness = 2.0f;
 const float ballRadius = 5.0f;
-const sf::Vector2f ballStartVelocity(400.0f, 200.0f);
-const float ballAcceleration = 20.0f;
+//const sf::Vector2f ballStartVelocity(400.0f, 200.0f);
+const int ballStartHorizontalVelocity = 150;
+const int ballStartMaxVerticalVelocity = 400;
+const int ballAcceleration = 50;
+const int velOffset = 10;
 
 Paddle leftPaddle, rightPaddle;
 
@@ -52,6 +55,13 @@ GameState currState = SERVE;
 bool canClick = true;
 
 sf::RenderWindow window(sf::VideoMode(windowLength, windowHeight), "PONG!", sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize);
+
+int getRandomNegative()
+{
+    int num = rand()%2;
+    num = (num == 0) ? -1 : 1;
+    return num;
+}
 
 void InitWindow()
 {
@@ -95,7 +105,7 @@ void Ball::Update()
     // Checking if colliding with vertical bounds
     float currX = this->sprite.getPosition().x;
     float currY = this->sprite.getPosition().y;
-    if ((currY <= 0) || ((currY+this->diameter) >= windowHeight))
+    if (((currY <= 0) && (this->velocity.y<0)) || (((currY+this->diameter) >= windowHeight) && (this->velocity.y>0)))
     {
         this->velocity.y *= -1;
     }
@@ -115,8 +125,10 @@ void Ball::Update()
 
 void Ball::Serve()
 {
-    float xVel = (winningSide == RIGHT) ? ballStartVelocity.x : -ballStartVelocity.x;
-    this->velocity = sf::Vector2f(xVel, ballStartVelocity.y);
+    float xVel = (winningSide == RIGHT) ? ballStartHorizontalVelocity : -ballStartHorizontalVelocity;
+    float xOffset = (rand() % (velOffset+1)) * getRandomNegative();
+    float yVel = (rand() % (ballStartMaxVerticalVelocity+1)) * getRandomNegative();
+    this->velocity = sf::Vector2f(xVel+xOffset,yVel);
 }
 
 void Ball::CheckServe()
@@ -171,7 +183,10 @@ void Paddle::Update()
     // Checking if colliding with ball
     if (ball.sprite.getGlobalBounds().intersects(this->sprite.getGlobalBounds()) && ((this->side == LEFT && ball.velocity.x<0) || (this->side == RIGHT && ball.velocity.x>0)))
     {
-        ball.velocity = sf::Vector2f(-ball.velocity.x + ball.acceleration, ball.velocity.y + ball.acceleration);
+        float xOffset = (rand() % (velOffset+1)) * getRandomNegative();
+        float yOffset = (rand() % (velOffset+1)) * getRandomNegative();
+        float newVel = (ball.velocity.x > 0) ? (-ball.velocity.x - ball.acceleration + xOffset) : (-ball.velocity.x + ball.acceleration + xOffset);
+        ball.velocity = sf::Vector2f(newVel, ball.velocity.y + yOffset);
     }
 }
 
@@ -248,6 +263,7 @@ void Score::FadeIn()
 
 void InitObjects()
 {
+    srand(time(NULL));
     InitWindow();
     score.Init();
     ball.Init();
