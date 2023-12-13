@@ -9,7 +9,7 @@ FetchContent_Declare(SFML
     GIT_TAG 2.6.x)
 FetchContent_MakeAvailable(SFML)
 
-add_executable(CMakeSFMLProject src/ball.h src/paddle.h src/score.h src/main.cpp)
+add_executable(CMakeSFMLProject src/utils/math.hpp src/utils/number_generator.hpp src/solver.hpp src/renderer.hpp src/main.cpp)
 target_link_libraries(CMakeSFMLProject PRIVATE sfml-graphics)
 target_compile_features(CMakeSFMLProject PRIVATE cxx_std_17)
 
