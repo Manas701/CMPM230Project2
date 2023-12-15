@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cmath>
 #include <SFML/Graphics.hpp>
 #include "solver.hpp"
 #include "renderer.hpp"
@@ -11,6 +12,10 @@ int32_t main(int32_t, char*[])
     // Create window
     const float windowWidth  = 1000.0f;
     const float windowHeight = 800.0f;
+    const sf::Color bgColor(223,199,167);
+    const float constraintWidth = windowWidth*0.75f;
+    const float constraintHeight = windowHeight*0.75f;
+    const sf::Vector2f constraintPos(windowWidth/2, windowHeight/2);
 
     sf::ContextSettings settings;
     settings.antialiasingLevel = 1;
@@ -22,39 +27,41 @@ int32_t main(int32_t, char*[])
     Renderer renderer{window};
 
     // Solver configuration
-    solver.setConstraint({windowWidth/2, windowHeight/2}, windowWidth*0.75f, windowHeight*0.75f);
+    solver.setConstraint(constraintPos, constraintWidth, constraintHeight);
     solver.setSubStepsCount(8);
     solver.setSimulationUpdateRate(frame_rate);
 
-    // Set simulation attributes
-    const float        object_spawn_delay    = 0.025f;
-    const float        object_spawn_speed    = 1200.0f;
-    const sf::Vector2f object_spawn_position = {500.0f, 200.0f};
-    const float        object_min_radius     = 1.0f;
-    const float        object_max_radius     = 20.0f;
-    const uint32_t     max_objects_count     = 1000;
-    const float        max_angle             = 1.0f;
+    // Set simulation attributes 
+    const int        largest_level     = 11;
+    const float      radius_multiplier = 5;
+    int level = 1;
 
     sf::Clock clock;
     // Main loop
     while (window.isOpen()) {
         sf::Event event{};
         while (window.pollEvent(event)) {
+            switch (event.type)
+            {
+                case sf::Event::Closed:
+                    window.close();
+                case sf::Event::MouseButtonReleased:
+                    sf::Vector2f mousePos = static_cast<sf::Vector2f>(sf::Mouse::getPosition(window));
+                    float object_radius = static_cast<float>(level*radius_multiplier);
+                    // A truly awful line of code that just checks whether you're spawning the ball within the constraint or not
+                    if (((mousePos.x+object_radius) <= (constraintPos.x + constraintWidth/2)) && ((mousePos.y+object_radius) <= (constraintPos.y + constraintHeight/2)) && ((mousePos.x-object_radius) >= (constraintPos.x - constraintWidth/2)) && ((mousePos.y-object_radius) >= (constraintPos.y - constraintHeight/2))) {
+                        auto& object = solver.addObject(static_cast<sf::Vector2f>(sf::Mouse::getPosition(window)), level);
+                        level++;
+                        if (level > 11) { level = 1; }
+                    }
+            }
             if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
                 window.close();
             }
         }
 
-        if (solver.getObjectsCount() < max_objects_count && clock.getElapsedTime().asSeconds() >= object_spawn_delay) {
-            clock.restart();
-            auto&       object = solver.addObject(object_spawn_position, RNGf::getRange(object_min_radius, object_max_radius));
-            const float t      = solver.getTime();
-            const float angle  = max_angle * sin(t) + Math::PI * 0.5f;
-            solver.setObjectVelocity(object, object_spawn_speed * sf::Vector2f{cos(angle), sin(angle)});
-        }
-
         solver.update();
-        window.clear(sf::Color::White);
+        window.clear(bgColor);
         renderer.render(solver);
 		window.display();
     }

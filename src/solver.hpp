@@ -1,22 +1,35 @@
-// Code taken from https://github.com/johnBuffer/VerletSFML/blob/main/solver.hpp
+// Base code taken from https://github.com/johnBuffer/VerletSFML/blob/main/solver.hpp
 
 #pragma once
 #include <vector>
 #include <cmath>
+#include <map>
 #include <SFML/Graphics.hpp>
-#include <iostream>
 
 #include "utils/math.hpp"
 
+const float radius_multiplier = 5;
+
+std::map<int, sf::Color>fruit_map= {{1,  sf::Color::Red},
+                                    {2,  sf::Color(255, 102, 0)},
+                                    {3,  sf::Color::Yellow},
+                                    {4,  sf::Color::Green},
+                                    {5,  sf::Color::Blue},
+                                    {6, sf::Color::Cyan},
+                                    {7,  sf::Color(75, 0, 130)},
+                                    {8,  sf::Color(127, 0, 255)},
+                                    {9, sf::Color::Magenta},
+                                    {10,  sf::Color::White},
+                                    {11,  sf::Color::Black}};
 
 struct VerletObject
 {
     sf::Vector2f position;
     sf::Vector2f position_last;
     sf::Vector2f acceleration;
-    float        radius        = 10.0f;
+    int          level         = 1;
+    float        radius        = 4.0f;
     sf::Color    color         = sf::Color::White;
-    bool         inConstraint  = true;
 
     VerletObject() = default;
     VerletObject(sf::Vector2f position_, float radius_)
@@ -24,6 +37,8 @@ struct VerletObject
         , position_last{position_}
         , acceleration{0.0f, 0.0f}
         , radius{radius_}
+        , level{static_cast<int>(static_cast<int>(radius_) / radius_multiplier)}
+        , color{fruit_map[level]}
     {}
 
     void update(float dt)
@@ -65,9 +80,9 @@ class Solver
 public:
     Solver() = default;
 
-    VerletObject& addObject(sf::Vector2f position, float radius)
+    VerletObject& addObject(sf::Vector2f position, int level)
     {
-        return m_objects.emplace_back(position, radius);
+        return m_objects.emplace_back(position, static_cast<float>(level*radius_multiplier));
     }
 
     void update()
@@ -189,11 +204,11 @@ private:
     {
         for (auto& obj : m_objects) {
             const sf::Vector2f v    = m_constraint_center - obj.position;
-            if (abs(v.x) > (m_constraint_width/2 - obj.radius) && abs(v.y) > (m_constraint_height/2 - obj.radius)) {
+            if (abs(v.x) > (m_constraint_width/2 - obj.radius) && -(v.y) > (m_constraint_height/2 - obj.radius)) {
                 obj.position = obj.position_last;
             } else if (abs(v.x) > (m_constraint_width/2 - obj.radius)) {
                 obj.position = sf::Vector2f(obj.position_last.x, obj.position.y);
-            } else if (abs(v.y) > (m_constraint_height/2 - obj.radius)) {
+            } else if (-(v.y) > (m_constraint_height/2 - obj.radius)) {
                 obj.position = sf::Vector2f(obj.position.x, obj.position_last.y);
             }
         }

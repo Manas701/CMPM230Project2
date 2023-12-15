@@ -1,4 +1,4 @@
-// Code taken from https://github.com/johnBuffer/VerletSFML/blob/main/renderer.hpp
+// Base code taken from https://github.com/johnBuffer/VerletSFML/blob/main/renderer.hpp
 
 #pragma once
 #include "solver.hpp"
@@ -22,7 +22,7 @@ public:
         // sf::CircleShape constraint_background{constraint.z};
         sf::RectangleShape constraint_background{sf::Vector2f(constraintSize.x, constraintSize.y)};
         constraint_background.setOrigin(constraintSize.x/2, constraintSize.y/2);
-        constraint_background.setFillColor(sf::Color::Black);
+        constraint_background.setFillColor(sf::Color(202,182,158));
         constraint_background.setPosition(constraintPos.x, constraintPos.y);
         // constraint_background.setPointCount(128);
         m_target.draw(constraint_background);
