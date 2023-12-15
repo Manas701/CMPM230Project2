@@ -10,6 +10,8 @@
 #include "utils/math.hpp"
 
 const float radius_multiplier = 5;
+const float y_neg_cap = -0.5f;
+const float x_cap = 1.0f;
 
 std::map<int, sf::Color>fruit_map= {{1,  sf::Color::Red},
                                     {2,  sf::Color(255, 102, 0)},
@@ -45,7 +47,13 @@ struct VerletObject
     void update(float dt)
     {
         // Compute how much we moved
-        const sf::Vector2f displacement = position - position_last;
+        sf::Vector2f displacement = position - position_last;
+
+        // Cap velocity
+        if (displacement.y < y_neg_cap) { displacement = sf::Vector2f(displacement.x, y_neg_cap); }
+        if (displacement.x < -x_cap)    { displacement = sf::Vector2f(-x_cap, displacement.y); }
+        if (displacement.x > x_cap)    { displacement = sf::Vector2f(x_cap, displacement.y); }
+
         // Update position
         position_last = position;
         position      = position + displacement + acceleration * (dt * dt);
@@ -231,7 +239,23 @@ private:
         }
 
         for (int i=0; i < add_count; i++) {
-            addObject(adding_obj[0].position, adding_obj[0].level+1);
+            sf::Vector2f new_pos = adding_obj[0].position;
+            float new_level = static_cast<float>(adding_obj[0].level+1);
+            float diff_pos_x = (new_pos.x + new_level*5.0f) - (m_constraint_center.x + m_constraint_width/2);
+            float diff_neg_x = (new_pos.x - new_level*5.0f) - (m_constraint_center.x - m_constraint_width/2);
+            float diff_pos_y = (new_pos.y + new_level*5.0f) - (m_constraint_center.y + m_constraint_height/2);
+            float diff_neg_y = (new_pos.y - new_level*5.0f) - (m_constraint_center.y - m_constraint_height/2);
+            if (diff_pos_x > 0) {
+                new_pos = sf::Vector2f(new_pos.x - diff_pos_x, new_pos.y);
+            } else if (diff_neg_x < 0) {
+                new_pos = sf::Vector2f(new_pos.x - diff_neg_x, new_pos.y);
+            }
+            if (diff_pos_y > 0) {
+                new_pos = sf::Vector2f(new_pos.x, new_pos.y - diff_pos_y);
+            } else if (diff_neg_y < 0) {
+                new_pos = sf::Vector2f(new_pos.x, new_pos.y - diff_neg_y);
+            }
+            addObject(new_pos, static_cast<int>(new_level));
             adding_obj.erase(adding_obj.begin());
         }
     }
