@@ -50,7 +50,7 @@ int32_t main(int32_t, char*[])
                     float object_radius = static_cast<float>(level*radius_multiplier);
                     // A truly awful line of code that just checks whether you're spawning the ball within the constraint or not
                     if (((mousePos.x+object_radius) <= (constraintPos.x + constraintWidth/2)) && ((mousePos.y+object_radius) <= (constraintPos.y + constraintHeight/2)) && ((mousePos.x-object_radius) >= (constraintPos.x - constraintWidth/2)) && ((mousePos.y-object_radius) >= (constraintPos.y - constraintHeight/2))) {
-                        auto& object = solver.addObject(static_cast<sf::Vector2f>(sf::Mouse::getPosition(window)), level);
+                        solver.addObject(static_cast<sf::Vector2f>(sf::Mouse::getPosition(window)), level);
                         level++;
                         if (level > 11) { level = 1; }
                     }

@@ -164,6 +164,7 @@ private:
     float                     m_constraint_width  = 100.0f;
     float                     m_constraint_height  = 100.0f;
     std::vector<VerletObject> m_objects;
+    std::set<int>    add_objects;
     std::set<int>             del_objects;
     float                     m_time               = 0.0f;
     float                     m_frame_dt           = 0.0f;
@@ -193,6 +194,11 @@ private:
                     if ((object_1.level == object_2.level) && (object_1.level < 11)) {
                         del_objects.insert(i);
                         del_objects.insert(k);
+                        if (object_1.position.y < object_2.position.y) {
+                            add_objects.insert(k);
+                        } else {
+                            add_objects.insert(i);
+                        }
                     }
                     else {
                         const float        dist  = sqrt(dist2);
@@ -211,11 +217,22 @@ private:
 
     void checkDelete(float dt)
     {
+        std::vector<VerletObject> adding_objects;
+        int add_count = add_objects.size();
+        for (int i=0; i < add_count; i++) {
+            auto ite = std::next(add_objects.begin(), i);
+            adding_objects.push_back(m_objects[*ite]);
+        }
+
         int del_count = del_objects.size();
-        for (int i=0; i < del_count; i++)
-        {
+        for (int i=0; i < del_count; i++) {
             m_objects.erase(m_objects.begin()+*del_objects.begin()-i);
             del_objects.erase(*del_objects.begin());
+        }
+
+        for (int i=0; i < add_count; i++) {
+            addObject(adding_objects[0].position, adding_objects[i].level+1);
+            adding_objects.erase(adding_objects.begin());
         }
     }
 
