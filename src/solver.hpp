@@ -217,12 +217,10 @@ private:
 
     void checkDelete(float dt)
     {
-        std::vector<sf::Vector2f> add_pos;
-        std::vector<int> add_level;
+        std::vector<VerletObject> adding_obj;
         int add_count = add_objects.size();
         for (int i=0; i < add_count; i++) {
-            add_pos.push_back(m_objects[*add_objects.begin()].position);
-            add_level.push_back(m_objects[*add_objects.begin()].level+1);
+            adding_obj.push_back(m_objects[*add_objects.begin()]);
             add_objects.erase(add_objects.begin());
         }
 
@@ -233,10 +231,8 @@ private:
         }
 
         for (int i=0; i < add_count; i++) {
-            std::cout << "add_count: " << add_count << std::endl;
-            addObject(add_pos[0], add_level[0]);
-            add_pos.erase(add_pos.begin());
-            add_level.erase(add_level.begin());
+            addObject(adding_obj[0].position, adding_obj[0].level+1);
+            adding_obj.erase(adding_obj.begin());
         }
     }
 
