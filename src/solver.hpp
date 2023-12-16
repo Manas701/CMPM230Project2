@@ -267,8 +267,10 @@ private:
             if (abs(v.x) > (m_constraint_width/2 - obj.radius) && -(v.y) > (m_constraint_height/2 - obj.radius)) {
                 obj.position = obj.position_last;
             } else if (abs(v.x) > (m_constraint_width/2 - obj.radius)) {
-                obj.setVelocity(obj.getVelocity(getStepDt()), getStepDt());
-                obj.position = sf::Vector2f(obj.position_last.x, obj.position.y);
+                if (v.y < (m_constraint_height/2 - obj.radius))
+                {
+                    obj.position = sf::Vector2f(obj.position_last.x, obj.position.y);
+                }
             } else if (-(v.y) > (m_constraint_height/2 - obj.radius)) {
                 obj.position = sf::Vector2f(obj.position.x, obj.position_last.y);
             }

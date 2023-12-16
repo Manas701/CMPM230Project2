@@ -14,6 +14,8 @@ const float constraintWidth = 250;
 const float constraintHeight = 350;
 const sf::Vector2f constraintPos(windowWidth/2, windowHeight*3/5);
 const float dropHeight = constraintPos.y - constraintHeight/2 - 10.0f;
+float lossTimer = 0.0f;
+bool something_is_out = false;
 
 sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "Suika", sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize);
 
@@ -47,6 +49,30 @@ void updateIndicatorPos(sf::CircleShape &indicator) {
     }
 }
 
+void Lose() {
+    std::cout << "You Lost!" << std::endl;
+    window.close();
+}
+
+void checkLoss(sf::Time dt) {
+    something_is_out = false;
+    const auto& objects = solver.getObjects();
+    for (auto &obj : objects) {
+        if ((obj.position.y < constraintPos.y - constraintHeight/2) || (obj.position.x > constraintPos.x + constraintWidth/2) || (obj.position.x < constraintPos.x - constraintWidth/2)) {
+            something_is_out = true;
+            lossTimer += dt.asSeconds();
+        }
+    }
+    if (something_is_out == false)
+    {
+        lossTimer = 0.0f;
+    }
+    if (lossTimer > 3.0f)
+    {
+        Lose();
+    }
+}
+
 int32_t main(int32_t, char*[])
 {
     srand(time(0));
@@ -76,9 +102,12 @@ int32_t main(int32_t, char*[])
         if (timer >= 1.0f)
         {
             indicator = makeIndicator();
+            updateIndicatorPos(indicator);
             unheld = false;
             timer = 0.0f;
         }
+
+        checkLoss(dt);
 
         while (window.pollEvent(event)) {
             switch (event.type)
