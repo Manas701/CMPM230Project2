@@ -9,7 +9,7 @@
 
 #include "utils/math.hpp"
 
-const float radius_multiplier = 5;
+const float radius_multiplier = 6;
 const float y_neg_cap = -0.5f;
 const float x_cap = 1.0f;
 
@@ -241,10 +241,10 @@ private:
         for (int i=0; i < add_count; i++) {
             sf::Vector2f new_pos = adding_obj[0].position;
             float new_level = static_cast<float>(adding_obj[0].level+1);
-            float diff_pos_x = (new_pos.x + new_level*5.0f) - (m_constraint_center.x + m_constraint_width/2);
-            float diff_neg_x = (new_pos.x - new_level*5.0f) - (m_constraint_center.x - m_constraint_width/2);
-            float diff_pos_y = (new_pos.y + new_level*5.0f) - (m_constraint_center.y + m_constraint_height/2);
-            float diff_neg_y = (new_pos.y - new_level*5.0f) - (m_constraint_center.y - m_constraint_height/2);
+            float diff_pos_x = (new_pos.x + new_level*static_cast<float>(radius_multiplier)) - (m_constraint_center.x + m_constraint_width/2);
+            float diff_neg_x = (new_pos.x - new_level*static_cast<float>(radius_multiplier)) - (m_constraint_center.x - m_constraint_width/2);
+            float diff_pos_y = (new_pos.y + new_level*static_cast<float>(radius_multiplier)) - (m_constraint_center.y + m_constraint_height/2);
+            float diff_neg_y = (new_pos.y - new_level*static_cast<float>(radius_multiplier)) - (m_constraint_center.y - m_constraint_height/2);
             if (diff_pos_x > 0) {
                 new_pos = sf::Vector2f(new_pos.x - diff_pos_x, new_pos.y);
             } else if (diff_neg_x < 0) {
@@ -267,6 +267,7 @@ private:
             if (abs(v.x) > (m_constraint_width/2 - obj.radius) && -(v.y) > (m_constraint_height/2 - obj.radius)) {
                 obj.position = obj.position_last;
             } else if (abs(v.x) > (m_constraint_width/2 - obj.radius)) {
+                obj.setVelocity(obj.getVelocity(getStepDt()), getStepDt());
                 obj.position = sf::Vector2f(obj.position_last.x, obj.position.y);
             } else if (-(v.y) > (m_constraint_height/2 - obj.radius)) {
                 obj.position = sf::Vector2f(obj.position.x, obj.position_last.y);
